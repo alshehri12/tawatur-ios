@@ -1,61 +1,60 @@
-//
-//  ContentView.swift
-//  Tawatur
-//
-//  Created by Abdulrahman Alshehri on 15/12/1447 AH.
-//
+// ContentView.swift — Root navigator
+// Watches AuthState and routes to the correct screen based on auth + verification status.
+// Also handles deep links: tawatur://transaction/{token}
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+
+    @EnvironmentObject var authState: AuthState
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
-        }
-    }
+        Group {
+            switch authState.status {
+            case .loading:
+                SplashView()
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
+            case .unauthenticated:
+                OnboardingView()
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
+            case .authenticated:
+                // If verified → go to main app.  If not → verification gate.
+                if authState.user?.canTransact == true {
+                    MainTabView()
+                } else {
+                    VerificationGateView()
+                }
             }
+        }
+        // Handle deep links: tawatur://transaction/<uuid-token>
+        .onOpenURL { url in
+            guard url.scheme == "tawatur",
+                  url.host == "transaction",
+                  let token = url.pathComponents.last(where: { $0 != "/" })
+            else { return }
+            authState.pendingTransactionToken = token
         }
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+// ── Splash (shown while AuthState checks stored token) ────────────────────────
+
+struct SplashView: View {
+    var body: some View {
+        ZStack {
+            Color.tBackground.ignoresSafeArea()
+            VStack(spacing: 8) {
+                Text("تواتر")
+                    .font(.tTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(.tPrimary)
+                Text("منصة توثيق الملكية الموثوقة")
+                    .font(.tCaption)
+                    .foregroundColor(.tSubtext)
+                ProgressView()
+                    .tint(.tPrimary)
+                    .padding(.top, 24)
+            }
+        }
+    }
 }

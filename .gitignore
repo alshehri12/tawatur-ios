@@ -1,0 +1,25 @@
+# ── Xcode user data (never share — contains personal layout/breakpoints) ──────
+xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+
+# ── Build output ──────────────────────────────────────────────────────────────
+DerivedData/
+build/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ── Swift Package Manager ─────────────────────────────────────────────────────
+.build/
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+
+# ── CocoaPods (if added later) ────────────────────────────────────────────────
+Pods/
+
+# ── macOS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+**/.DS_Store
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+.idea/

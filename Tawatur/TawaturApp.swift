@@ -1,32 +1,21 @@
-//
-//  TawaturApp.swift
-//  Tawatur
-//
-//  Created by Abdulrahman Alshehri on 15/12/1447 AH.
-//
+// TawaturApp.swift — App entry point
+// Removes SwiftData (not needed — all data lives on the backend).
+// Injects AuthState as the global environment object and enforces RTL/Arabic.
 
 import SwiftUI
-import SwiftData
 
 @main
 struct TawaturApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    @StateObject private var authState = AuthState()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(authState)
+                .environment(\.layoutDirection, .rightToLeft)   // Enforce RTL
+                .environment(\.locale, Locale(identifier: "ar_SA"))
+                .preferredColorScheme(.light)
         }
-        .modelContainer(sharedModelContainer)
     }
 }
