@@ -106,7 +106,7 @@ struct OTPView: View {
 
     @ViewBuilder
     private var registrationDestination: some View {
-        RegistrationDetailView(phone: phone, otp: vm.otpCode)
+        UserTypeSelectionView(phone: phone, otp: vm.otpCode)
     }
 
     private func handleConfirm() async {
@@ -119,17 +119,115 @@ struct OTPView: View {
     }
 }
 
-// ── Registration detail (collect ID after OTP) ────────────────────────────────
+// ── User type selection screen ────────────────────────────────────────────────
+
+struct UserTypeSelectionView: View {
+
+    let phone: String
+    let otp: String
+
+    var body: some View {
+        ZStack {
+            Color.tBackground.ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 0) {
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("نوع الحساب")
+                        .font(.tTitle)
+                        .foregroundColor(.tText)
+                    Text("اختر نوع حسابك للمتابعة")
+                        .font(.tBody)
+                        .foregroundColor(.tSubtext)
+                }
+                .padding(.top, 16)
+                .padding(.bottom, 32)
+
+                VStack(spacing: 16) {
+                    NavigationLink(destination: RegistrationDetailView(phone: phone, otp: otp, accountType: "individual")) {
+                        UserTypeCard(
+                            icon: "person.fill",
+                            color: .tPrimary,
+                            title: "فرد",
+                            subtitle: "مواطن أو مقيم يرغب في بيع أو شراء جهاز"
+                        )
+                    }
+
+                    NavigationLink(destination: RegistrationDetailView(phone: phone, otp: otp, accountType: "business")) {
+                        UserTypeCard(
+                            icon: "building.2.fill",
+                            color: .tSuccess,
+                            title: "محل تجاري",
+                            subtitle: "منشأة تجارية مسجلة في وزارة التجارة"
+                        )
+                    }
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, 24)
+        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct UserTypeCard: View {
+
+    let icon: String
+    let color: Color
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.12))
+                    .frame(width: 60, height: 60)
+                Image(systemName: icon)
+                    .font(.system(size: 26, weight: .medium))
+                    .foregroundColor(color)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.tHeadline)
+                    .foregroundColor(.tText)
+                Text(subtitle)
+                    .font(.tCaption)
+                    .foregroundColor(.tSubtext)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.left")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.tSubtext)
+        }
+        .padding(20)
+        .background(Color.tSurface)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.tBorder, lineWidth: 1)
+        )
+    }
+}
+
+// ── Registration detail (collect ID / CR after type selection) ────────────────
 
 struct RegistrationDetailView: View {
 
     let phone: String
     let otp: String
+    let accountType: String   // "individual" or "business" — passed from UserTypeSelectionView
 
     @StateObject private var vm = AuthViewModel()
     @EnvironmentObject var authState: AuthState
 
-    @State private var accountType = "individual"
     @State private var nationalId = ""
     @State private var iqama = ""
     @State private var crNumber = ""
@@ -141,27 +239,26 @@ struct RegistrationDetailView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("بيانات الحساب")
+                        Text(accountType == "individual" ? "بيانات الهوية" : "بيانات المنشأة")
                             .font(.tTitle)
                             .foregroundColor(.tText)
-                        Text("اختر نوع حسابك وأدخل بيانات التحقق")
+                        Text(accountType == "individual"
+                             ? "أدخل رقم هويتك لإتمام التسجيل"
+                             : "أدخل بيانات سجلك التجاري لإتمام التسجيل")
                             .font(.tBody)
                             .foregroundColor(.tSubtext)
                     }
                     .padding(.top, 8)
 
-                    // Account type picker
-                    Picker("نوع الحساب", selection: $accountType) {
-                        Text("فرد").tag("individual")
-                        Text("جهة تجارية").tag("business")
-                    }
-                    .pickerStyle(.segmented)
-
                     if accountType == "individual" {
                         TField(label: "رقم الهوية الوطنية", placeholder: "10 أرقام", text: $nationalId)
                             .keyboardType(.numberPad)
-                        Text("أو").font(.tCaption).foregroundColor(.tSubtext).frame(maxWidth: .infinity)
+                        Text("أو")
+                            .font(.tCaption)
+                            .foregroundColor(.tSubtext)
+                            .frame(maxWidth: .infinity)
                         TField(label: "رقم الإقامة", placeholder: "10 أرقام", text: $iqama)
                             .keyboardType(.numberPad)
                     } else {
@@ -197,14 +294,13 @@ struct RegistrationDetailView: View {
             }
         }
         .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private var isValid: Bool {
-        if accountType == "individual" {
-            return !nationalId.isEmpty || !iqama.isEmpty
-        } else {
-            return !crNumber.isEmpty && !businessName.isEmpty
-        }
+        accountType == "individual"
+            ? (!nationalId.isEmpty || !iqama.isEmpty)
+            : (!crNumber.isEmpty && !businessName.isEmpty)
     }
 
     private func submit() async {

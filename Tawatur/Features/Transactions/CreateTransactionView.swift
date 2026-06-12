@@ -210,10 +210,19 @@ struct Step3Details: View {
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.tBorder, lineWidth: 1))
             }
 
+            if let error = vm.errorMessage {
+                Text(error)
+                    .font(.tCaption)
+                    .foregroundColor(.tDanger)
+                    .padding(12)
+                    .background(Color.tDanger.opacity(0.08))
+                    .cornerRadius(8)
+            }
+
             Spacer()
 
             HStack(spacing: 12) {
-                Button { vm.step = 2 } label: { Text("السابق").tSecondaryButton() }
+                Button { vm.errorMessage = nil; vm.step = 2 } label: { Text("السابق").tSecondaryButton() }
                 Button { Task { await vm.submit() } } label: {
                     if vm.isLoading {
                         ProgressView().tint(.white).frame(maxWidth: .infinity).padding(.vertical, 14)

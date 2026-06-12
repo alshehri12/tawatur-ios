@@ -27,12 +27,48 @@ enum NetworkError: LocalizedError {
 }
 
 // ── Backend error shape ────────────────────────────────────────────────────────
+// Handles all DRF error formats:
+//   {"detail": "..."}                   → permission / auth errors
+//   {"non_field_errors": ["..."]}        → cross-field validation errors
+//   {"imei_1": ["..."], "brand": ["..."]} → per-field validation errors
 
 struct APIError: Decodable {
     let detail: String?
     let nonFieldErrors: [String]?
+    private let firstFieldError: String?
+
+    private struct AnyKey: CodingKey {
+        var stringValue: String
+        var intValue: Int? { nil }
+        init?(stringValue: String) { self.stringValue = stringValue }
+        init?(intValue: Int) { nil }
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: AnyKey.self)
+
+        detail = try? c.decodeIfPresent(String.self, forKey: AnyKey(stringValue: "detail")!)
+
+        // Accept both snake_case (raw JSON) and camelCase (convertFromSnakeCase decoder)
+        nonFieldErrors =
+            (try? c.decodeIfPresent([String].self, forKey: AnyKey(stringValue: "non_field_errors")!)) ??
+            (try? c.decodeIfPresent([String].self, forKey: AnyKey(stringValue: "nonFieldErrors")!))
+
+        // Grab the first message from any field-level error key
+        var first: String?
+        for key in c.allKeys {
+            let k = key.stringValue
+            guard k != "detail" && k != "non_field_errors" && k != "nonFieldErrors" else { continue }
+            if let msgs = try? c.decode([String].self, forKey: key), let msg = msgs.first {
+                first = msg; break
+            } else if let msg = try? c.decode(String.self, forKey: key) {
+                first = msg; break
+            }
+        }
+        firstFieldError = first
+    }
 
     var message: String {
-        detail ?? nonFieldErrors?.first ?? "حدث خطأ غير متوقع."
+        detail ?? nonFieldErrors?.first ?? firstFieldError ?? "حدث خطأ غير متوقع."
     }
 }

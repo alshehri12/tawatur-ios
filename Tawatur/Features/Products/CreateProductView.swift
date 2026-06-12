@@ -23,6 +23,14 @@ final class CreateProductViewModel: ObservableObject {
             errorMessage = "يجب إدخال رقم IMEI أو الرقم التسلسلي واحد على الأقل."
             return
         }
+        if !imei1.isEmpty, imei1.count < 14 || imei1.count > 15 || !imei1.allSatisfy(\.isNumber) {
+            errorMessage = "IMEI 1 يجب أن يكون 14 أو 15 رقمًا."
+            return
+        }
+        if !imei2.isEmpty, imei2.count < 14 || imei2.count > 15 || !imei2.allSatisfy(\.isNumber) {
+            errorMessage = "IMEI 2 يجب أن يكون 14 أو 15 رقمًا."
+            return
+        }
         isLoading = true; errorMessage = nil
         defer { isLoading = false }
         do {
