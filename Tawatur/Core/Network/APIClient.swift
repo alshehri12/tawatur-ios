@@ -14,7 +14,7 @@ final class APIClient {
     private init() {}
 
     // Change this to your Mac's LAN IP if it changes (run `ipconfig getifaddr en0` on Mac)
-    private let baseURL = URL(string: "http://192.168.100.15:8000/api/v1/")!
+    private let baseURL = URL(string: "http://192.168.100.200:8000/api/v1/")!
 
     // Wi-Fi only session.
     // allowsCellularAccess = false  → don't use cellular
@@ -63,7 +63,7 @@ final class APIClient {
             params.prohibitedInterfaceTypes = [.cellular]
 
             let connection = NWConnection(
-                host: "192.168.100.15",
+                host: "192.168.100.200",
                 port: 8000,
                 using: params
             )
@@ -84,7 +84,7 @@ final class APIClient {
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    finish((true, "TCP OK → 192.168.100.15:8000"))
+                    finish((true, "TCP OK → 192.168.100.200:8000"))
                 case .failed(let err):
                     finish((false, "NW failed: \(err)"))
                 case .waiting(let err):
