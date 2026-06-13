@@ -1,6 +1,7 @@
 // CertificatesListView.swift — List of user's certificates + detail/PDF view.
 
 import SwiftUI
+import PDFKit
 
 struct CertificatesListView: View {
 
@@ -126,7 +127,7 @@ struct CertificateDetailView: View {
                     VStack(spacing: 10) {
                         if !certificate.pdfUrl.isEmpty {
                             Button { showPDFSheet = true } label: {
-                                Label("تحميل الشهادة PDF", systemImage: "arrow.down.doc.fill")
+                                Label("عرض الشهادة PDF", systemImage: "doc.text.magnifyingglass")
                                     .tPrimaryButton()
                             }
                         }
@@ -143,40 +144,133 @@ struct CertificateDetailView: View {
         .navigationTitle("الشهادة")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPDFSheet) {
-            PDFDownloadView(urlString: certificate.pdfUrl, title: certificate.certificateNumber)
+            PDFViewerSheet(urlString: certificate.pdfUrl, certificateNumber: certificate.certificateNumber)
         }
     }
 }
 
-// ── PDF Viewer ────────────────────────────────────────────────────────────────
+// ── In-App PDF Viewer ─────────────────────────────────────────────────────────
 
-struct PDFDownloadView: View {
+struct PDFViewerSheet: View {
     let urlString: String
-    let title: String
+    let certificateNumber: String
+
     @Environment(\.dismiss) private var dismiss
+    @State private var pdfDocument: PDFDocument?
+    @State private var pdfData: Data?
+    @State private var isLoading = true
+    @State private var loadError: String?
+    @State private var showingShare = false
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.tBackground.ignoresSafeArea()
-                VStack(spacing: 16) {
-                    Image(systemName: "doc.fill").font(.system(size: 60)).foregroundColor(.tPrimary)
-                    Text("شهادة \(title)").font(.tHeadline).foregroundColor(.tText)
-                    if let url = URL(string: urlString) {
-                        ShareLink(item: url) {
-                            Label("فتح / مشاركة PDF", systemImage: "arrow.down.circle.fill")
-                                .tPrimaryButton()
-                        }
-                        .padding(.horizontal, 40)
+
+                if isLoading {
+                    VStack(spacing: 16) {
+                        ProgressView().tint(.tPrimary).scaleEffect(1.3)
+                        Text("جاري تحميل الشهادة…")
+                            .font(.tBody).foregroundColor(.tSubtext)
                     }
+                } else if let doc = pdfDocument {
+                    PDFKitView(document: doc)
+                        .ignoresSafeArea(edges: .bottom)
+                } else {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 48)).foregroundColor(.tDanger)
+                        Text(loadError ?? "تعذّر تحميل الشهادة")
+                            .font(.tBody).foregroundColor(.tSubtext)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(32)
                 }
             }
-            .navigationTitle("تحميل PDF")
+            .navigationTitle(certificateNumber)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("إغلاق") { dismiss() }
+                    Button("إغلاق") { dismiss() }.foregroundColor(.tSubtext)
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if pdfData != nil {
+                        Button {
+                            showingShare = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                                .foregroundColor(.tPrimary)
+                        }
+                    }
                 }
             }
+            .sheet(isPresented: $showingShare) {
+                if let url = tempPDFFileURL() {
+                    ActivityShareSheet(items: [url])
+                }
+            }
+            .task { await loadPDF() }
         }
     }
+
+    private func loadPDF() async {
+        guard let url = URL(string: urlString) else {
+            loadError = "رابط الشهادة غير صالح"
+            isLoading = false
+            return
+        }
+        var request = URLRequest(url: url, timeoutInterval: 20)
+        if let token = TokenManager.shared.accessToken {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        do {
+            let (data, _) = try await URLSession.shared.data(for: request)
+            pdfData = data
+            pdfDocument = PDFDocument(data: data)
+            if pdfDocument == nil {
+                loadError = "الملف المستلم ليس PDF صالحاً"
+            }
+        } catch {
+            loadError = "تعذّر تحميل الشهادة. تحقق من الاتصال بالشبكة."
+        }
+        isLoading = false
+    }
+
+    private func tempPDFFileURL() -> URL? {
+        guard let data = pdfData else { return nil }
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(certificateNumber).pdf")
+        try? data.write(to: url)
+        return url
+    }
+}
+
+// UIViewRepresentable wrapper so PDFView renders inside SwiftUI
+struct PDFKitView: UIViewRepresentable {
+    let document: PDFDocument
+
+    func makeUIView(context: Context) -> PDFView {
+        let view = PDFView()
+        view.document = document
+        view.autoScales = true
+        view.displayMode = .singlePageContinuous
+        view.displayDirection = .vertical
+        view.backgroundColor = UIColor(Color.tBackground)
+        return view
+    }
+
+    func updateUIView(_ uiView: PDFView, context: Context) {
+        uiView.document = document
+    }
+}
+
+// UIActivityViewController wrapper for sharing local files
+struct ActivityShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiView: UIActivityViewController, context: Context) {}
 }
