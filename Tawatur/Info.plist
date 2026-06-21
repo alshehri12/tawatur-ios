@@ -31,6 +31,10 @@
 		<true/>
 	</dict>
 
+	<!-- Required for barcode/QR scanning via VisionKit DataScannerViewController -->
+	<key>NSCameraUsageDescription</key>
+	<string>تواتر تستخدم الكاميرا لمسح رمز الباركود أو QR الخاص بالجهاز وملء رقمه التسلسلي تلقائياً.</string>
+
 	<!-- Required for iOS 14+: connecting to LAN IPs (e.g. dev backend on 192.168.x.x) -->
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>تواتر تحتاج إلى الوصول إلى الشبكة المحلية للتواصل مع الخادم.</string>

@@ -7,28 +7,21 @@ final class CreateProductViewModel: ObservableObject {
     @Published var category = "smartphone"
     @Published var brand = ""
     @Published var model = ""
-    @Published var condition = "good"
-    @Published var imei1 = ""
-    @Published var imei2 = ""
-    @Published var serial = ""
+    @Published var condition = "new"
+    @Published var identifier = ""
     @Published var notes = ""
+    @Published var hasTerms = false
+    @Published var purchaseTerms = ""
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var success = false
+    @Published var showScanner = false
 
-    var hasIdentifier: Bool { !imei1.isEmpty || !imei2.isEmpty || !serial.isEmpty }
+    var canSubmit: Bool { !brand.isEmpty && !model.isEmpty && !identifier.isEmpty }
 
     func submit() async {
-        guard hasIdentifier else {
-            errorMessage = "يجب إدخال رقم IMEI أو الرقم التسلسلي واحد على الأقل."
-            return
-        }
-        if !imei1.isEmpty, imei1.count < 14 || imei1.count > 15 || !imei1.allSatisfy(\.isNumber) {
-            errorMessage = "IMEI 1 يجب أن يكون 14 أو 15 رقمًا."
-            return
-        }
-        if !imei2.isEmpty, imei2.count < 14 || imei2.count > 15 || !imei2.allSatisfy(\.isNumber) {
-            errorMessage = "IMEI 2 يجب أن يكون 14 أو 15 رقمًا."
+        guard !identifier.isEmpty else {
+            errorMessage = "يجب إدخال رقم IMEI أو الرقم التسلسلي."
             return
         }
         isLoading = true; errorMessage = nil
@@ -38,10 +31,9 @@ final class CreateProductViewModel: ObservableObject {
                 .createProduct(
                     category: category, brand: brand, model: model,
                     condition: condition,
-                    imei1: imei1.isEmpty ? nil : imei1,
-                    imei2: imei2.isEmpty ? nil : imei2,
-                    serial: serial.isEmpty ? nil : serial,
-                    notes: notes.isEmpty ? nil : notes
+                    identifier: identifier,
+                    notes: notes.isEmpty ? nil : notes,
+                    purchaseTerms: (hasTerms && !purchaseTerms.isEmpty) ? purchaseTerms : nil
                 ),
                 as: Product.self
             )
@@ -64,8 +56,7 @@ struct CreateProductView: View {
         ("camera", "كاميرا"),
     ]
     let conditions = [
-        ("new", "جديد"), ("excellent", "ممتاز"),
-        ("good", "جيد"), ("fair", "مقبول"), ("poor", "ضعيف"),
+        ("new", "جديد"), ("used", "مستعمل"),
     ]
 
     var body: some View {
@@ -106,27 +97,90 @@ struct CreateProductView: View {
                             .pickerStyle(.segmented)
                         }
 
-                        // Identifiers section
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("المعرّفات (مطلوب واحد على الأقل)")
-                                .font(.tCaption).foregroundColor(.tSubtext)
-                            Text("تُستخدم للتحقق من هوية الجهاز ومنع التكرار")
+                        // Single identifier field + barcode scanner
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("معرّف الجهاز (مطلوب)").font(.tCaption).foregroundColor(.tSubtext)
+                            Text("IMEI أو الرقم التسلسلي — حتى 25 حرفاً")
                                 .font(.tSmall).foregroundColor(.tSubtext.opacity(0.7))
+
+                            HStack(spacing: 10) {
+                                TField(label: "", placeholder: "أدخل IMEI أو الرقم التسلسلي", text: $vm.identifier)
+                                    .onChange(of: vm.identifier) { newVal in
+                                        if newVal.count > 25 {
+                                            vm.identifier = String(newVal.prefix(25))
+                                        }
+                                    }
+
+                                Button {
+                                    vm.showScanner = true
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: "barcode.viewfinder")
+                                            .font(.system(size: 22))
+                                        Text("مسح").font(.tSmall)
+                                    }
+                                    .foregroundColor(.tPrimary)
+                                    .frame(width: 64, height: 56)
+                                    .background(Color.tPrimary.opacity(0.1))
+                                    .cornerRadius(10)
+                                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.tPrimary.opacity(0.3), lineWidth: 1))
+                                }
+                            }
+
+                            if !vm.identifier.isEmpty {
+                                Text("\(vm.identifier.count) / 25")
+                                    .font(.tSmall)
+                                    .foregroundColor(vm.identifier.count > 20 ? .tWarning : .tSubtext)
+                            }
                         }
 
-                        TField(label: "IMEI 1 (للهواتف والأجهزة اللوحية)", placeholder: "15 رقم", text: $vm.imei1)
-                            .keyboardType(.numberPad)
-                        TField(label: "IMEI 2 (الشريحة الثانية - اختياري)", placeholder: "15 رقم", text: $vm.imei2)
-                            .keyboardType(.numberPad)
-                        TField(label: "الرقم التسلسلي", placeholder: "Serial Number", text: $vm.serial)
-
-                        // Notes
+                        // Notes (optional)
                         VStack(alignment: .leading, spacing: 6) {
                             Text("ملاحظات (اختياري)").font(.tCaption).foregroundColor(.tSubtext)
-                            TextEditor(text: $vm.notes)
-                                .font(.tBody).frame(height: 80)
-                                .padding(10).background(Color.tSurface).cornerRadius(10)
+                            ZStack(alignment: .topLeading) {
+                                if vm.notes.isEmpty {
+                                    Text("أي ملاحظات إضافية عن الجهاز...")
+                                        .font(.tBody).foregroundColor(.tSubtext.opacity(0.5))
+                                        .padding(.horizontal, 14).padding(.top, 18)
+                                }
+                                TextEditor(text: $vm.notes)
+                                    .font(.tBody).frame(height: 80)
+                                    .padding(10).background(Color.clear)
+                                    .scrollContentBackground(.hidden)
+                            }
+                            .background(Color.tSurface).cornerRadius(10)
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.tBorder, lineWidth: 1))
+                        }
+
+                        // Purchase terms
+                        VStack(alignment: .leading, spacing: 8) {
+                            Button {
+                                vm.hasTerms.toggle()
+                                if !vm.hasTerms { vm.purchaseTerms = "" }
+                            } label: {
+                                HStack(spacing: 8) {
+                                    Image(systemName: vm.hasTerms ? "checkmark.square.fill" : "square")
+                                        .font(.system(size: 20))
+                                        .foregroundColor(vm.hasTerms ? .tPrimary : .tSubtext)
+                                    Text("يوجد شروط للشراء").font(.tBody).foregroundColor(.tText)
+                                }
+                            }
+
+                            if vm.hasTerms {
+                                ZStack(alignment: .topLeading) {
+                                    if vm.purchaseTerms.isEmpty {
+                                        Text("اكتب شروط الشراء هنا...")
+                                            .font(.tBody).foregroundColor(.tSubtext.opacity(0.5))
+                                            .padding(.horizontal, 14).padding(.top, 18)
+                                    }
+                                    TextEditor(text: $vm.purchaseTerms)
+                                        .font(.tBody).frame(height: 110)
+                                        .padding(10).background(Color.clear)
+                                        .scrollContentBackground(.hidden)
+                                }
+                                .background(Color.tSurface).cornerRadius(10)
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.tBorder, lineWidth: 1))
+                            }
                         }
 
                         if let error = vm.errorMessage {
@@ -142,14 +196,14 @@ struct CreateProductView: View {
                                     .background(Color.tPrimary).cornerRadius(10)
                             } else { Text("تسجيل المنتج").tPrimaryButton() }
                         }
-                        .disabled(vm.isLoading || vm.brand.isEmpty || vm.model.isEmpty || !vm.hasIdentifier)
-                        .opacity((vm.brand.isEmpty || vm.model.isEmpty || !vm.hasIdentifier) ? 0.6 : 1)
+                        .disabled(vm.isLoading || !vm.canSubmit)
+                        .opacity(!vm.canSubmit ? 0.6 : 1)
                         .padding(.bottom, 16)
                     }
                     .padding(.horizontal, 20).padding(.top, 8)
                 }
             }
-            .navigationTitle("تسجيل منتج جديد")
+            .navigationTitle("تسجيل شراء منتج جديد")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -157,6 +211,9 @@ struct CreateProductView: View {
                 }
             }
             .onChange(of: vm.success) { if $0 { dismiss() } }
+            .sheet(isPresented: $vm.showScanner) {
+                BarcodeScannerSheet(scannedCode: $vm.identifier)
+            }
         }
     }
 }

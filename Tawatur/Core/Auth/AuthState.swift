@@ -14,7 +14,6 @@ final class AuthState: ObservableObject {
 
     @Published var status: AuthStatus = .loading
     @Published var user: UserProfile?
-    @Published var pendingTransactionToken: String?
 
     init() {
         Task { @MainActor in await self.checkStoredToken() }

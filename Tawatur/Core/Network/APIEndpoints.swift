@@ -96,12 +96,17 @@ extension APIEndpoint {
     }
 
     static func createProduct(category: String, brand: String, model: String,
-                               condition: String, imei1: String?, imei2: String?,
-                               serial: String?, notes: String?) -> APIEndpoint {
-        .init("products/", method: .POST,
-              body: ["category": category, "brand": brand, "model": model,
-                     "condition": condition, "imei_1": imei1, "imei_2": imei2,
-                     "serial_number": serial, "notes": notes])
+                               condition: String, identifier: String,
+                               notes: String?, purchaseTerms: String?) -> APIEndpoint {
+        let isStandardIMEI = identifier.allSatisfy(\.isNumber)
+                             && (identifier.count == 14 || identifier.count == 15)
+        var body: [String: Any?] = [
+            "category": category, "brand": brand, "model": model,
+            "condition": condition, "notes": notes,
+            "purchase_terms": purchaseTerms,
+        ]
+        body[isStandardIMEI ? "imei_1" : "serial_number"] = identifier
+        return .init("products/", method: .POST, body: body)
     }
 }
 
@@ -114,27 +119,26 @@ extension APIEndpoint {
         .init("transactions/\(id)/")
     }
 
-    static func resolveLink(token: String) -> APIEndpoint {
-        .init("transactions/link/\(token)/", requiresAuth: false)
-    }
-
-    static func createTransaction(productId: String, recipientPhone: String,
-                                   type: String, price: Double?, notes: String?) -> APIEndpoint {
-        .init("transactions/", method: .POST,
-              body: ["product_id": productId, "recipient_phone": recipientPhone,
-                     "transaction_type": type, "price": price, "notes": notes])
-    }
-
-    static func approveTransaction(id: String) -> APIEndpoint {
-        .init("transactions/\(id)/approve/", method: .POST)
-    }
-
-    static func rejectTransaction(id: String) -> APIEndpoint {
-        .init("transactions/\(id)/reject/", method: .POST)
-    }
-
-    static func cancelTransaction(id: String) -> APIEndpoint {
-        .init("transactions/\(id)/cancel/", method: .POST)
+    static func createDirectPurchase(productId: String,
+                                      sellerFullName: String,
+                                      sellerIdNumber: String,
+                                      sellerMobile: String,
+                                      sellerCity: String,
+                                      price: Double?,
+                                      deviceCondition: String?,
+                                      sellerTerms: String?,
+                                      notes: String?) -> APIEndpoint {
+        .init("transactions/", method: .POST, body: [
+            "product_id":       productId,
+            "seller_full_name": sellerFullName,
+            "seller_id_number": sellerIdNumber,
+            "seller_mobile":    sellerMobile,
+            "seller_city":      sellerCity,
+            "price":            price,
+            "device_condition": deviceCondition,
+            "seller_terms":     sellerTerms,
+            "notes":            notes,
+        ])
     }
 }
 

@@ -14,14 +14,14 @@ enum NetworkError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .invalidURL:                        return "عنوان الطلب غير صالح."
-        case .invalidResponse:                   return "استجابة غير صالحة من الخادم."
-        case .httpError(_, let msg):             return msg
-        case .decodingError(let d):              return "خطأ في تحليل البيانات: \(d)"
-        case .unauthorized:                      return "انتهت جلستك. يرجى تسجيل الدخول مجدداً."
-        case .noInternet:                        return "الرجاء الاتصال بالإنترنت"
-        case .serverUnreachable:                 return "الرجاء الاتصال بالإنترنت"
-        case .timedOut:                          return "الرجاء الاتصال بالإنترنت"
+        case .invalidURL:        return "عنوان الطلب غير صالح."
+        case .invalidResponse:   return "استجابة غير صالحة من الخادم."
+        case .httpError(_, let msg): return msg
+        case .decodingError(let d):  return "خطأ في تحليل البيانات: \(d)"
+        case .unauthorized:      return "انتهت جلستك. يرجى تسجيل الدخول مجدداً."
+        case .noInternet:        return "لا يوجد اتصال بالشبكة. تأكد من تفعيل الواي فاي."
+        case .serverUnreachable: return "الخدمة غير متاحة حالياً. حاول مجدداً بعد قليل."
+        case .timedOut:          return "انتهت مهلة الاتصال. تأكد من اتصالك بالشبكة وحاول مجدداً."
         }
     }
 }

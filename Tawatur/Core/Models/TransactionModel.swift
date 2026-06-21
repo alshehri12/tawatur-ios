@@ -9,6 +9,7 @@ struct Transaction: Decodable, Identifiable {
     let status: String
     let statusDisplay: String
     let price: Double?
+    let deviceCondition: String?
     let createdAt: Date
     let expiresAt: Date
     let approvedAt: Date?
@@ -17,10 +18,13 @@ struct Transaction: Decodable, Identifiable {
 
     // Detail-only fields
     let notes: String?
-    let linkToken: String?
-    let shareLink: String?
-    let initiatorInfo: PartyInfo?
-    let recipientInfo: PartyInfo?
+    let sellerTerms: String?
+    let sellerFullName: String?
+    let sellerIdNumber: String?
+    let sellerMobile: String?
+    let sellerCity: String?
+    let certificateId: String?
+    let certificatePdfUrl: String?
     let auditLogs: [AuditLogEntry]?
 }
 
@@ -31,43 +35,16 @@ struct ProductSummary: Decodable {
     let categoryDisplay: String
 }
 
-struct PartyInfo: Decodable {
-    let userType: String
-    let verificationStatus: String
-    let businessName: String?
-}
-
 struct AuditLogEntry: Decodable, Identifiable {
-    var id = UUID()       // local only — not from API
+    var id = UUID()
     let action: String
     let oldStatus: String
     let newStatus: String
     let timestamp: Date
 
-    // Custom decoding because `id` is generated locally
     enum CodingKeys: String, CodingKey {
         case action, oldStatus, newStatus, timestamp
     }
-}
-
-// ── Resolve link response (public endpoint) ───────────────────────────────────
-
-struct TransactionLinkInfo: Decodable {
-    let transactionId: String
-    let status: String
-    let product: LinkProductInfo
-    let transactionTypeDisplay: String
-    let price: Double?
-    let expiresAt: Date
-    let requiresAuth: Bool
-}
-
-struct LinkProductInfo: Decodable {
-    let brand: String
-    let model: String
-    let categoryDisplay: String
-    let trustScore: Int
-    let trustLevel: String
 }
 
 // ── Status helpers ────────────────────────────────────────────────────────────
@@ -83,7 +60,7 @@ extension Transaction {
         case "rejected":  return .tDanger
         case "cancelled": return .tSubtext
         case "expired":   return .tSubtext
-        default:          return .tWarning   // pending
+        default:          return .tWarning
         }
     }
 }

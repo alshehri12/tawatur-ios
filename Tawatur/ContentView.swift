@@ -26,14 +26,6 @@ struct ContentView: View {
                 }
             }
         }
-        // Handle deep links: tawatur://transaction/<uuid-token>
-        .onOpenURL { url in
-            guard url.scheme == "tawatur",
-                  url.host == "transaction",
-                  let token = url.pathComponents.last(where: { $0 != "/" })
-            else { return }
-            authState.pendingTransactionToken = token
-        }
     }
 }
 
