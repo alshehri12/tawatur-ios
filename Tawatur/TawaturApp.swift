@@ -16,6 +16,11 @@ struct TawaturApp: App {
                 .environment(\.layoutDirection, .rightToLeft)   // Enforce RTL
                 .environment(\.locale, Locale(identifier: "ar_SA"))
                 .preferredColorScheme(.light)
+                .task {
+                    // Silently discover backend IP on every launch.
+                    // Updates ServerConfig if the LAN IP changed since last run.
+                    ServerDiscovery.shared.discoverAndUpdate()
+                }
         }
     }
 }
