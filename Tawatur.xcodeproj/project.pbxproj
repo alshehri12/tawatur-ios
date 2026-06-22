@@ -11,10 +11,10 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		A1B2C3D4E5F6A7B8C9D0E1F2 = {
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* Exceptions for "Tawatur" folder in "Tawatur" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				"Info.plist",
+				Info.plist,
 			);
 			target = C4C05FBA2FCE058400F3B434 /* Tawatur */;
 		};
@@ -24,7 +24,7 @@
 		C4C05FBD2FCE058400F3B434 /* Tawatur */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				A1B2C3D4E5F6A7B8C9D0E1F2,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* Exceptions for "Tawatur" folder in "Tawatur" target */,
 			);
 			path = Tawatur;
 			sourceTree = "<group>";
@@ -269,7 +269,7 @@
 				DEVELOPMENT_TEAM = DC74V927PA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Tawatur/Info.plist";
+				INFOPLIST_FILE = Tawatur/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -297,7 +297,7 @@
 				DEVELOPMENT_TEAM = DC74V927PA;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "Tawatur/Info.plist";
+				INFOPLIST_FILE = Tawatur/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

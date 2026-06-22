@@ -6,6 +6,8 @@ struct ProfileView: View {
 
     @EnvironmentObject var authState: AuthState
     @State private var showLogoutAlert = false
+    @State private var showServerIPAlert = false
+    @State private var pendingIP = ""
 
     var body: some View {
         NavigationStack {
@@ -59,6 +61,29 @@ struct ProfileView: View {
                         }
                         .background(Color.tBackground).cornerRadius(12)
 
+                        // ── Developer settings ────────────────────────────────
+                        VStack(spacing: 0) {
+                            Button {
+                                pendingIP = ServerConfig.shared.serverIP
+                                showServerIPAlert = true
+                            } label: {
+                                HStack(spacing: 14) {
+                                    Image(systemName: "network")
+                                        .font(.body).foregroundColor(.tPrimary)
+                                        .frame(width: 22)
+                                        .padding(.leading, 16)
+                                    Text("عنوان الخادم").font(.tBody).foregroundColor(.tText)
+                                    Spacer()
+                                    Text(ServerConfig.shared.serverIP)
+                                        .font(.tCaption).foregroundColor(.tSubtext)
+                                    Image(systemName: "pencil").font(.tSmall).foregroundColor(.tSubtext.opacity(0.5))
+                                        .padding(.trailing, 14)
+                                }
+                                .padding(.vertical, 14)
+                            }
+                        }
+                        .background(Color.tBackground).cornerRadius(12)
+
                         // ── Logout ────────────────────────────────────────────
                         Button {
                             showLogoutAlert = true
@@ -86,6 +111,18 @@ struct ProfileView: View {
                 }
             } message: {
                 Text("هل أنت متأكد من تسجيل الخروج؟")
+            }
+            .alert("عنوان الخادم", isPresented: $showServerIPAlert) {
+                TextField("مثال: 192.168.1.5", text: $pendingIP)
+                    .keyboardType(.numbersAndPunctuation)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                Button("حفظ") {
+                    ServerConfig.shared.serverIP = pendingIP
+                }
+                Button("إلغاء", role: .cancel) {}
+            } message: {
+                Text("أدخل IP الجهاز الذي يعمل عليه الخادم (نفس شبكة الواي فاي)")
             }
         }
     }

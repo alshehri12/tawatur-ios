@@ -13,9 +13,9 @@ final class APIClient {
     static let shared = APIClient()
     private init() {}
 
-    // Uses Mac's Bonjour/mDNS hostname — works regardless of what IP the router assigns.
-    // Never needs updating. Both devices must be on the same Wi-Fi network.
-    private let baseURL = URL(string: "http://Abdulrahmans-Mac-Studio.local:8000/api/v1/")!
+    // Reads base URL from ServerConfig (UserDefaults). Change the IP from
+    // Profile → إعدادات المطوّر without rebuilding the app.
+    private var baseURL: URL { ServerConfig.shared.baseURL }
 
     // Wi-Fi only session.
     // allowsCellularAccess = false  → don't use cellular
@@ -63,8 +63,9 @@ final class APIClient {
             // Block cellular so iOS is forced to route through Wi-Fi to the LAN IP
             params.prohibitedInterfaceTypes = [.cellular]
 
+            let host = ServerConfig.shared.serverIP
             let connection = NWConnection(
-                host: "Abdulrahmans-Mac-Studio.local",
+                host: NWEndpoint.Host(host),
                 port: 8000,
                 using: params
             )
@@ -85,7 +86,7 @@ final class APIClient {
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    finish((true, "TCP OK → Abdulrahmans-Mac-Studio.local:8000"))
+                    finish((true, "TCP OK → \(host):8000"))
                 case .failed(let err):
                     finish((false, "NW failed: \(err)"))
                 case .waiting(let err):
@@ -101,7 +102,7 @@ final class APIClient {
 
             // Hard timeout — finish no later than 6 seconds
             DispatchQueue.global().asyncAfter(deadline: .now() + 6) {
-                finish((false, "Timeout (6s) — is backend running on 0.0.0.0:8000?"))
+                finish((false, "Timeout (6s) — is backend running on \(host):8000?"))
             }
         }
     }
