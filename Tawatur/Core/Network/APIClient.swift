@@ -63,10 +63,11 @@ final class APIClient {
             // Block cellular so iOS is forced to route through Wi-Fi to the LAN IP
             params.prohibitedInterfaceTypes = [.cellular]
 
-            let host = ServerConfig.shared.serverIP
+            let host = ServerConfig.shared.pingHost
+            let port = NWEndpoint.Port(rawValue: ServerConfig.shared.pingPort)!
             let connection = NWConnection(
                 host: NWEndpoint.Host(host),
-                port: 8000,
+                port: port,
                 using: params
             )
 
@@ -86,7 +87,7 @@ final class APIClient {
             connection.stateUpdateHandler = { state in
                 switch state {
                 case .ready:
-                    finish((true, "TCP OK → \(host):8000"))
+                    finish((true, "TCP OK → \(host):\(port)"))
                 case .failed(let err):
                     finish((false, "NW failed: \(err)"))
                 case .waiting(let err):
@@ -102,7 +103,7 @@ final class APIClient {
 
             // Hard timeout — finish no later than 6 seconds
             DispatchQueue.global().asyncAfter(deadline: .now() + 6) {
-                finish((false, "Timeout (6s) — is backend running on \(host):8000?"))
+                finish((false, "Timeout (6s) — is backend running on \(host):\(port)?"))
             }
         }
     }

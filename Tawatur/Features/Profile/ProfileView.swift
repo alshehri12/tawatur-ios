@@ -64,7 +64,7 @@ struct ProfileView: View {
                         // ── Developer settings ────────────────────────────────
                         VStack(spacing: 0) {
                             Button {
-                                pendingIP = ServerConfig.shared.serverIP
+                                pendingIP = ServerConfig.shared.serverHost
                                 showServerIPAlert = true
                             } label: {
                                 HStack(spacing: 14) {
@@ -72,10 +72,13 @@ struct ProfileView: View {
                                         .font(.body).foregroundColor(.tPrimary)
                                         .frame(width: 22)
                                         .padding(.leading, 16)
-                                    Text("عنوان الخادم").font(.tBody).foregroundColor(.tText)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("عنوان الخادم").font(.tBody).foregroundColor(.tText)
+                                        Text(ServerConfig.shared.serverHost)
+                                            .font(.tCaption).foregroundColor(.tSubtext)
+                                            .lineLimit(1).truncationMode(.middle)
+                                    }
                                     Spacer()
-                                    Text(ServerConfig.shared.serverIP)
-                                        .font(.tCaption).foregroundColor(.tSubtext)
                                     Image(systemName: "pencil").font(.tSmall).foregroundColor(.tSubtext.opacity(0.5))
                                         .padding(.trailing, 14)
                                 }
@@ -113,16 +116,16 @@ struct ProfileView: View {
                 Text("هل أنت متأكد من تسجيل الخروج؟")
             }
             .alert("عنوان الخادم", isPresented: $showServerIPAlert) {
-                TextField("مثال: 192.168.1.5", text: $pendingIP)
-                    .keyboardType(.numbersAndPunctuation)
+                TextField("192.168.1.5  أو  https://xxx.ngrok-free.app", text: $pendingIP)
+                    .keyboardType(.URL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                 Button("حفظ") {
-                    ServerConfig.shared.serverIP = pendingIP
+                    ServerConfig.shared.serverHost = pendingIP
                 }
                 Button("إلغاء", role: .cancel) {}
             } message: {
-                Text("أدخل IP الجهاز الذي يعمل عليه الخادم (نفس شبكة الواي فاي)")
+                Text("أدخل IP للشبكة المحلية، أو رابط ngrok للوصول من خارج الشبكة")
             }
         }
     }

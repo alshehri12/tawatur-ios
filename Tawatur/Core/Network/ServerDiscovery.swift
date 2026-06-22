@@ -19,29 +19,37 @@ final class ServerDiscovery {
     private let prefix   = "TAWATUR_BACKEND:"
 
     // Call once at app startup — runs entirely in the background.
+    // Skips UDP scan if the current host is an external URL (ngrok / production server).
     func discoverAndUpdate() {
+        let currentHost = ServerConfig.shared.serverHost
+        // Don't scan if already pointing at an external server
+        guard !currentHost.hasPrefix("https://"),
+              !(currentHost.hasPrefix("http://") && !currentHost.contains("192.168") && !currentHost.contains("10.0") && !currentHost.contains("172.")) else {
+            print("[Discovery] External host configured — skipping LAN scan")
+            return
+        }
+
         DispatchQueue.global(qos: .background).async {
             // 1. Fast path: unicast to last-known IP (works when IP hasn't changed)
-            let storedIP = ServerConfig.shared.serverIP
+            let storedIP = ServerConfig.shared.pingHost
             if let found = self.sendUDP(to: storedIP, timeoutSecs: 1) {
                 if found != storedIP {
-                    ServerConfig.shared.serverIP = found
+                    ServerConfig.shared.updateFromDiscovery(ip: found)
                     print("[Discovery] IP updated via unicast: \(found)")
                 }
-                return // backend is reachable — done
+                return
             }
 
             // 2. Slow path: subnet broadcast (finds backend after DHCP reassignment)
             if let localIP = self.localWiFiIP(),
                let broadcast = self.subnetBroadcast(from: localIP),
                let found = self.sendUDP(to: broadcast, timeoutSecs: 2) {
-                ServerConfig.shared.serverIP = found
+                ServerConfig.shared.updateFromDiscovery(ip: found)
                 print("[Discovery] IP updated via broadcast: \(found)")
                 return
             }
 
-            // 3. Both failed — keep existing stored IP, user sees error on next request
-            print("[Discovery] Backend not found — using stored IP: \(storedIP)")
+            print("[Discovery] Backend not found — using stored host: \(storedIP)")
         }
     }
 

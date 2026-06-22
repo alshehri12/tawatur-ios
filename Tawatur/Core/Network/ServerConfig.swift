@@ -5,19 +5,63 @@ final class ServerConfig {
     static let shared = ServerConfig()
     private init() {}
 
-    private let udKey = "tawatur_dev_server_ip"
-    private let defaultIP = "192.168.100.9"
+    private let udKey = "tawatur_server_host"
+    // Default: local dev IP. Set to ngrok URL for TestFlight builds.
+    private let defaultHost = "192.168.100.9"
 
-    var serverIP: String {
-        get { UserDefaults.standard.string(forKey: udKey) ?? defaultIP }
+    /// Stored value is either:
+    ///   - A plain LAN IP:   "192.168.100.9"           → http://IP:8000/api/v1/
+    ///   - A full URL:       "https://xxx.ngrok-free.app" → https://xxx.ngrok-free.app/api/v1/
+    var serverHost: String {
+        get { UserDefaults.standard.string(forKey: udKey) ?? defaultHost }
         set {
-            let cleaned = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !cleaned.isEmpty else { return }
-            UserDefaults.standard.set(cleaned, forKey: udKey)
+            var v = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !v.isEmpty else { return }
+            // Strip trailing slashes so URL construction is consistent
+            while v.hasSuffix("/") { v = String(v.dropLast()) }
+            UserDefaults.standard.set(v, forKey: udKey)
         }
     }
 
     var baseURL: URL {
-        URL(string: "http://\(serverIP):8000/api/v1/")!
+        if serverHost.hasPrefix("http") {
+            // Full URL (e.g. ngrok, production server)
+            return URL(string: "\(serverHost)/api/v1/")!
+        } else {
+            // Plain LAN IP — local dev
+            return URL(string: "http://\(serverHost):8000/api/v1/")!
+        }
+    }
+
+    /// Host string for NWConnection ping (hostname or IP only, no scheme/port)
+    var pingHost: String {
+        if serverHost.hasPrefix("http") {
+            return URL(string: serverHost)?.host ?? defaultHost
+        }
+        return serverHost
+    }
+
+    /// Port for NWConnection ping
+    var pingPort: UInt16 {
+        if serverHost.hasPrefix("https") { return 443 }
+        if serverHost.hasPrefix("http"),
+           let port = URL(string: serverHost)?.port { return UInt16(port) }
+        return 8000
+    }
+
+    /// Called by ServerDiscovery when it finds a new LAN IP.
+    /// Ignored if the current host is an external URL (ngrok / production).
+    func updateFromDiscovery(ip: String) {
+        guard !serverHost.hasPrefix("http") ||
+              serverHost.contains("192.168") ||
+              serverHost.contains("10.0") ||
+              serverHost.contains("172.") else { return }
+        serverHost = ip
+    }
+
+    // Legacy accessor kept for ProfileView
+    var serverIP: String {
+        get { serverHost }
+        set { serverHost = newValue }
     }
 }
