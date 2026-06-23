@@ -6,8 +6,8 @@ final class ServerConfig {
     private init() {}
 
     private let udKey = "tawatur_server_host"
-    // Default: local dev IP. Set to ngrok URL for TestFlight builds.
-    private let defaultHost = "192.168.100.9"
+    // Points to the ngrok public URL — works over WiFi and cellular for TestFlight.
+    private let defaultHost = "https://giggle-subsonic-reliant.ngrok-free.dev"
 
     /// Stored value is either:
     ///   - A plain LAN IP:   "192.168.100.9"           → http://IP:8000/api/v1/

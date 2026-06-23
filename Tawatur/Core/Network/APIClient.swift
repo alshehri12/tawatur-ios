@@ -17,19 +17,14 @@ final class APIClient {
     // Profile → إعدادات المطوّر without rebuilding the app.
     private var baseURL: URL { ServerConfig.shared.baseURL }
 
-    // Wi-Fi only session.
-    // allowsCellularAccess = false  → don't use cellular
-    // allowsConstrainedNetworkAccess = true  → allow even on Low Data Mode Wi-Fi
-    // allowsExpensiveNetworkAccess = true    → allow even on hotspot/metered Wi-Fi
-    // waitsForConnectivity = false           → fail immediately, don't queue forever
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
-        config.allowsCellularAccess          = false
+        config.allowsCellularAccess           = true   // needed for ngrok / TestFlight over sim card
         config.allowsConstrainedNetworkAccess = true
         config.allowsExpensiveNetworkAccess   = true
         config.waitsForConnectivity           = false
-        config.timeoutIntervalForRequest      = 10
-        config.timeoutIntervalForResource     = 30
+        config.timeoutIntervalForRequest      = 15
+        config.timeoutIntervalForResource     = 60
         return URLSession(configuration: config)
     }()
 
@@ -60,8 +55,6 @@ final class APIClient {
     func ping() async -> (Bool, String) {
         await withCheckedContinuation { continuation in
             let params = NWParameters.tcp
-            // Block cellular so iOS is forced to route through Wi-Fi to the LAN IP
-            params.prohibitedInterfaceTypes = [.cellular]
 
             let host = ServerConfig.shared.pingHost
             let port = NWEndpoint.Port(rawValue: ServerConfig.shared.pingPort)!
