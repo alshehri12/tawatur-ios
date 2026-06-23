@@ -150,7 +150,12 @@ final class APIClient {
 
         var request = URLRequest(url: url)
         request.httpMethod      = endpoint.method.rawValue
-        request.timeoutInterval = 10
+        request.timeoutInterval = 15
+
+        // Tell ngrok to skip its browser interstitial — without this, ngrok
+        // returns an HTML warning page instead of forwarding to the API.
+        request.setValue("true", forHTTPHeaderField: "ngrok-skip-browser-warning")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         if endpoint.requiresAuth, let token = TokenManager.shared.accessToken {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
