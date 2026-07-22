@@ -25,6 +25,7 @@ struct Transaction: Decodable, Identifiable {
     let sellerCity: String?
     let certificateId: String?
     let certificatePdfUrl: String?
+    let confirmUrl: String?
     let auditLogs: [AuditLogEntry]?
 }
 

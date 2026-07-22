@@ -6,6 +6,7 @@ import Combine
 final class TransactionViewModel: ObservableObject {
     @Published var transaction: Transaction?
     @Published var isLoading = false
+    @Published var isResponding = false
     @Published var errorMessage: String?
 
     func load(id: String) async {
@@ -13,6 +14,14 @@ final class TransactionViewModel: ObservableObject {
         defer { isLoading = false }
         do { transaction = try await APIClient.shared.request(.transactionDetail(id: id), as: Transaction.self) }
         catch { errorMessage = error.localizedDescription }
+    }
+
+    func respond(id: String, accept: Bool) async {
+        isResponding = true; errorMessage = nil
+        defer { isResponding = false }
+        do {
+            transaction = try await APIClient.shared.request(.sellerRespond(id: id, accept: accept), as: Transaction.self)
+        } catch { errorMessage = error.localizedDescription }
     }
 }
 
@@ -123,6 +132,36 @@ struct TransactionDetailView: View {
                         if let error = vm.errorMessage {
                             Text(error).font(.tCaption).foregroundColor(.tDanger)
                                 .padding(12).background(Color.tDanger.opacity(0.08)).cornerRadius(8)
+                        }
+
+                        // Seller response — only shown to the matched seller
+                        // (not the buyer) while the request is still pending.
+                        if txn.isPending, txn.isInitiator == false {
+                            VStack(spacing: 10) {
+                                Text("هذا طلب شراء موجّه إليك — راجع البيانات أعلاه وأكّد أو ارفض العملية")
+                                    .font(.tCaption).foregroundColor(.tSubtext)
+                                    .multilineTextAlignment(.center)
+                                HStack(spacing: 10) {
+                                    Button {
+                                        Task { await vm.respond(id: transactionId, accept: false) }
+                                    } label: {
+                                        Text("رفض").tSecondaryButton()
+                                    }
+                                    Button {
+                                        Task { await vm.respond(id: transactionId, accept: true) }
+                                    } label: {
+                                        if vm.isResponding {
+                                            ProgressView().tint(.white)
+                                                .frame(maxWidth: .infinity).padding(.vertical, 14)
+                                                .background(Color.tPrimary).cornerRadius(10)
+                                        } else {
+                                            Text("تأكيد البيع وتوثيق العقد").tPrimaryButton()
+                                        }
+                                    }
+                                }
+                                .disabled(vm.isResponding)
+                            }
+                            .padding(14).background(Color.tBackground).cornerRadius(12)
                         }
                     }
                     .padding(16)

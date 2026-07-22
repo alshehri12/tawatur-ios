@@ -1,23 +1,26 @@
-// HomeView.swift — Dashboard: owned products + recent pending transactions.
+// HomeView.swift — Dashboard: pending transactions + my completed operations (معاملاتي).
 
 import SwiftUI
 import Combine
 
 final class HomeViewModel: ObservableObject {
-    @Published var products: [Product] = []
-    @Published var transactions: [Transaction] = []
+    @Published var pendingTransactions: [Transaction] = []
+    @Published var completedTransactions: [Transaction] = []
+    @Published var sellerRequests: [Transaction] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
     func load() async {
         isLoading = true; errorMessage = nil
         defer { isLoading = false }
-        async let prods  = APIClient.shared.request(.myProducts, as: [Product].self)
-        async let txns   = APIClient.shared.request(.myTransactions, as: [Transaction].self)
+        async let txnsCall = APIClient.shared.request(.myTransactions, as: [Transaction].self)
+        async let requestsCall = APIClient.shared.request(.pendingSellerRequests, as: [Transaction].self)
         do {
-            products     = try await prods
-            transactions = (try await txns).filter { $0.isPending }
+            let txns = try await txnsCall
+            pendingTransactions   = txns.filter { $0.isPending }
+            completedTransactions = txns.filter { $0.isApproved }
         } catch { errorMessage = error.localizedDescription }
+        sellerRequests = (try? await requestsCall) ?? []
     }
 }
 
@@ -25,7 +28,7 @@ struct HomeView: View {
 
     @EnvironmentObject var authState: AuthState
     @StateObject private var vm = HomeViewModel()
-    @State private var showCreateProduct = false
+    @State private var showNewPurchase = false
 
     var body: some View {
         NavigationStack {
@@ -49,12 +52,25 @@ struct HomeView: View {
                         .padding(.horizontal, 20)
                         .padding(.top, 16)
 
+                        // ── Buy-requests addressed to me (as the named seller) ─
+                        if !vm.sellerRequests.isEmpty {
+                            SectionHeader(title: "طلبات شراء بانتظار ردك", count: vm.sellerRequests.count)
+                            LazyVStack(spacing: 12) {
+                                ForEach(vm.sellerRequests) { txn in
+                                    NavigationLink(destination: TransactionDetailView(transactionId: txn.id)) {
+                                        SellerRequestCard(transaction: txn)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                        }
+
                         // ── Pending transactions ──────────────────────────────
-                        if !vm.transactions.isEmpty {
-                            SectionHeader(title: "معاملات بانتظار الموافقة", count: vm.transactions.count)
+                        if !vm.pendingTransactions.isEmpty {
+                            SectionHeader(title: "معاملات بانتظار الموافقة", count: vm.pendingTransactions.count)
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
-                                    ForEach(vm.transactions) { txn in
+                                    ForEach(vm.pendingTransactions) { txn in
                                         NavigationLink(destination: TransactionDetailView(transactionId: txn.id)) {
                                             PendingTransactionCard(transaction: txn)
                                         }
@@ -64,18 +80,18 @@ struct HomeView: View {
                             }
                         }
 
-                        // ── My products ───────────────────────────────────────
-                        SectionHeader(title: "منتجاتي", count: vm.products.count)
+                        // ── معاملاتي — completed selling operations ───────────
+                        SectionHeader(title: "معاملاتي", count: vm.completedTransactions.count)
 
                         if vm.isLoading {
                             ProgressView().tint(.tPrimary).padding(40)
-                        } else if vm.products.isEmpty {
-                            EmptyProductsView(showCreate: $showCreateProduct)
+                        } else if vm.completedTransactions.isEmpty {
+                            EmptyOperationsView(showCreate: $showNewPurchase)
                         } else {
                             LazyVStack(spacing: 12) {
-                                ForEach(vm.products) { product in
-                                    NavigationLink(destination: ProductDetailView(productId: product.id)) {
-                                        ProductCard(product: product)
+                                ForEach(vm.completedTransactions) { txn in
+                                    NavigationLink(destination: TransactionDetailView(transactionId: txn.id)) {
+                                        CompletedTransactionCard(transaction: txn)
                                     }
                                 }
                             }
@@ -95,14 +111,14 @@ struct HomeView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button { showCreateProduct = true } label: {
+                    Button { showNewPurchase = true } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.title2).foregroundColor(.tPrimary)
                     }
                 }
             }
-            .sheet(isPresented: $showCreateProduct, onDismiss: { Task { await vm.load() } }) {
-                CreateProductView()
+            .sheet(isPresented: $showNewPurchase, onDismiss: { Task { await vm.load() } }) {
+                NewPurchaseView()
             }
             .task { await vm.load() }
         }
@@ -143,31 +159,66 @@ struct VerificationBadge: View {
     }
 }
 
-struct ProductCard: View {
-    let product: Product
+struct CompletedTransactionCard: View {
+    let transaction: Transaction
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: product.categoryIcon)
-                .font(.title2).foregroundColor(.tPrimary)
+            Image(systemName: "checkmark.seal.fill")
+                .font(.title2).foregroundColor(.tSuccess)
                 .frame(width: 44, height: 44)
-                .background(Color.tPrimary.opacity(0.1)).cornerRadius(10)
+                .background(Color.tSuccess.opacity(0.1)).cornerRadius(10)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(product.brand) \(product.model)")
+                Text("\(transaction.productSummary.brand) \(transaction.productSummary.model)")
                     .font(.tBodyBold).foregroundColor(.tText)
-                Text(product.categoryDisplay)
-                    .font(.tCaption).foregroundColor(.tSubtext)
+                if let seller = transaction.sellerFullName, !seller.isEmpty {
+                    Text("من: \(seller)").font(.tCaption).foregroundColor(.tSubtext)
+                } else {
+                    Text(transaction.productSummary.categoryDisplay)
+                        .font(.tCaption).foregroundColor(.tSubtext)
+                }
             }
             Spacer()
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("\(product.trustScore)")
-                    .font(.tBodyBold).foregroundColor(product.trustColor)
-                Text("درجة الثقة").font(.tSmall).foregroundColor(.tSubtext)
+            if let price = transaction.price {
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("\(price, specifier: "%.0f")").font(.tBodyBold).foregroundColor(.tPrimary)
+                    Text("ر.س").font(.tSmall).foregroundColor(.tSubtext)
+                }
             }
         }
         .padding(14)
         .background(Color.tBackground)
         .cornerRadius(12)
+        .shadow(color: Color.tText.opacity(0.05), radius: 6, x: 0, y: 2)
+    }
+}
+
+struct SellerRequestCard: View {
+    let transaction: Transaction
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "bell.badge.fill")
+                .font(.title2).foregroundColor(.tWarning)
+                .frame(width: 44, height: 44)
+                .background(Color.tWarning.opacity(0.12)).cornerRadius(10)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("طلب شراء \(transaction.productSummary.brand) \(transaction.productSummary.model)")
+                    .font(.tBodyBold).foregroundColor(.tText)
+                Text("يحتاج تأكيدك كبائع").font(.tCaption).foregroundColor(.tWarning)
+            }
+            Spacer()
+            if let price = transaction.price {
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("\(price, specifier: "%.0f")").font(.tBodyBold).foregroundColor(.tPrimary)
+                    Text("ر.س").font(.tSmall).foregroundColor(.tSubtext)
+                }
+            }
+        }
+        .padding(14)
+        .background(Color.tBackground)
+        .cornerRadius(12)
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.tWarning.opacity(0.3), lineWidth: 1.2))
         .shadow(color: Color.tText.opacity(0.05), radius: 6, x: 0, y: 2)
     }
 }
@@ -197,16 +248,16 @@ struct PendingTransactionCard: View {
     }
 }
 
-struct EmptyProductsView: View {
+struct EmptyOperationsView: View {
     @Binding var showCreate: Bool
     var body: some View {
         VStack(spacing: 16) {
-            Image(systemName: "cube.box").font(.system(size: 48)).foregroundColor(.tSubtext.opacity(0.4))
-            Text("لا توجد منتجات مسجلة").font(.tBodyBold).foregroundColor(.tSubtext)
-            Text("سجّل منتجك الأول وابدأ ببناء تاريخ ملكية موثوق")
+            Image(systemName: "checkmark.seal").font(.system(size: 48)).foregroundColor(.tSubtext.opacity(0.4))
+            Text("لا توجد معاملات مكتملة بعد").font(.tBodyBold).foregroundColor(.tSubtext)
+            Text("سجّل أول عملية شراء وابدأ ببناء تاريخ ملكية موثوق")
                 .font(.tCaption).foregroundColor(.tSubtext).multilineTextAlignment(.center)
-            Button { showCreate = true } label: { Text("تسجيل منتج").tPrimaryButton() }
-                .frame(maxWidth: 200)
+            Button { showCreate = true } label: { Text("عملية شراء جديدة").tPrimaryButton() }
+                .frame(maxWidth: 220)
         }
         .padding(40)
     }

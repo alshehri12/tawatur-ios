@@ -115,8 +115,37 @@ extension APIEndpoint {
 extension APIEndpoint {
     static var myTransactions: APIEndpoint { .init("transactions/my/") }
 
+    /// Buy-requests addressed to my phone number (I'm the named seller),
+    /// still awaiting my response. Empty until a buyer names my number.
+    static var pendingSellerRequests: APIEndpoint { .init("transactions/pending-for-me/") }
+
     static func transactionDetail(id: String) -> APIEndpoint {
         .init("transactions/\(id)/")
+    }
+
+    static func sellerRespond(id: String, accept: Bool) -> APIEndpoint {
+        .init("transactions/\(id)/seller-respond/", method: .POST,
+              body: ["action": accept ? "accept" : "reject"])
+    }
+
+    static func createRegisteredPurchase(category: String, brand: String, model: String,
+                                          condition: String, identifier: String,
+                                          productNotes: String?,
+                                          sellerFullName: String, sellerIdNumber: String,
+                                          sellerMobile: String, sellerCity: String,
+                                          price: Double?, sellerTerms: String?,
+                                          notes: String?) -> APIEndpoint {
+        let isStandardIMEI = identifier.allSatisfy(\.isNumber)
+                             && (identifier.count == 14 || identifier.count == 15)
+        var body: [String: Any?] = [
+            "category": category, "brand": brand, "model": model,
+            "condition": condition, "product_notes": productNotes,
+            "seller_full_name": sellerFullName, "seller_id_number": sellerIdNumber,
+            "seller_mobile": sellerMobile, "seller_city": sellerCity,
+            "price": price, "seller_terms": sellerTerms, "notes": notes,
+        ]
+        body[isStandardIMEI ? "imei_1" : "serial_number"] = identifier
+        return .init("transactions/register-purchase/", method: .POST, body: body)
     }
 
     static func createDirectPurchase(productId: String,
@@ -146,6 +175,10 @@ extension APIEndpoint {
 
 extension APIEndpoint {
     static var myCertificates: APIEndpoint { .init("certificates/") }
+
+    /// Contracts where I was the seller — matched by my own national ID/Iqama
+    /// once I've submitted identity verification. Empty until then.
+    static var soldByMeCertificates: APIEndpoint { .init("certificates/sold-by-me/") }
 
     static func certificateDetail(id: String) -> APIEndpoint {
         .init("certificates/\(id)/")

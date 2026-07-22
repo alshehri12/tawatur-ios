@@ -28,8 +28,8 @@ struct OTPView: View {
                 }
                 .padding(.top, 8)
 
-                // DEBUG only — shows OTP returned by dev backend
-                #if DEBUG
+                // Shown only when the backend includes the OTP in the response
+                // (OTP_EXPOSE_IN_RESPONSE — dev/testing servers only, never production).
                 if let debug = vm.otpDebug {
                     HStack {
                         Image(systemName: "ant.fill").foregroundColor(.tWarning)
@@ -41,7 +41,6 @@ struct OTPView: View {
                     .background(Color.tWarning.opacity(0.1))
                     .cornerRadius(8)
                 }
-                #endif
 
                 // OTP input
                 VStack(alignment: .leading, spacing: 8) {
@@ -106,7 +105,9 @@ struct OTPView: View {
 
     @ViewBuilder
     private var registrationDestination: some View {
-        UserTypeSelectionView(phone: phone, otp: vm.otpCode)
+        // All new accounts register as individuals — business accounts
+        // aren't offered during registration for now.
+        RegistrationDetailView(phone: phone, otp: vm.otpCode, accountType: "individual")
     }
 
     private func handleConfirm() async {
@@ -119,119 +120,19 @@ struct OTPView: View {
     }
 }
 
-// ── User type selection screen ────────────────────────────────────────────────
-
-struct UserTypeSelectionView: View {
-
-    let phone: String
-    let otp: String
-
-    var body: some View {
-        ZStack {
-            Color.tBackground.ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 0) {
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("نوع الحساب")
-                        .font(.tTitle)
-                        .foregroundColor(.tText)
-                    Text("اختر نوع حسابك للمتابعة")
-                        .font(.tBody)
-                        .foregroundColor(.tSubtext)
-                }
-                .padding(.top, 16)
-                .padding(.bottom, 32)
-
-                VStack(spacing: 16) {
-                    NavigationLink(destination: RegistrationDetailView(phone: phone, otp: otp, accountType: "individual")) {
-                        UserTypeCard(
-                            icon: "person.fill",
-                            color: .tPrimary,
-                            title: "فرد",
-                            subtitle: "مواطن أو مقيم يرغب في بيع أو شراء جهاز"
-                        )
-                    }
-
-                    NavigationLink(destination: RegistrationDetailView(phone: phone, otp: otp, accountType: "business")) {
-                        UserTypeCard(
-                            icon: "building.2.fill",
-                            color: .tSuccess,
-                            title: "محل تجاري",
-                            subtitle: "منشأة تجارية مسجلة في وزارة التجارة"
-                        )
-                    }
-                }
-
-                Spacer()
-            }
-            .padding(.horizontal, 24)
-        }
-        .navigationTitle("")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-struct UserTypeCard: View {
-
-    let icon: String
-    let color: Color
-    let title: String
-    let subtitle: String
-
-    var body: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.12))
-                    .frame(width: 60, height: 60)
-                Image(systemName: icon)
-                    .font(.system(size: 26, weight: .medium))
-                    .foregroundColor(color)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.tHeadline)
-                    .foregroundColor(.tText)
-                Text(subtitle)
-                    .font(.tCaption)
-                    .foregroundColor(.tSubtext)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Spacer()
-
-            Image(systemName: "chevron.left")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.tSubtext)
-        }
-        .padding(20)
-        .background(Color.tSurface)
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.tBorder, lineWidth: 1)
-        )
-    }
-}
-
-// ── Registration detail (collect ID / CR after type selection) ────────────────
+// ── Registration detail (collect national ID / Iqama right after OTP) ────────
 
 struct RegistrationDetailView: View {
 
     let phone: String
     let otp: String
-    let accountType: String   // "individual" or "business" — passed from UserTypeSelectionView
+    let accountType: String   // always "individual" for now — business registration isn't offered
 
     @StateObject private var vm = AuthViewModel()
     @EnvironmentObject var authState: AuthState
 
     @State private var nationalId = ""
     @State private var iqama = ""
-    @State private var crNumber = ""
-    @State private var businessName = ""
 
     var body: some View {
         ZStack {
@@ -241,31 +142,23 @@ struct RegistrationDetailView: View {
                 VStack(alignment: .leading, spacing: 24) {
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(accountType == "individual" ? "بيانات الهوية" : "بيانات المنشأة")
+                        Text("بيانات الهوية")
                             .font(.tTitle)
                             .foregroundColor(.tText)
-                        Text(accountType == "individual"
-                             ? "أدخل رقم هويتك لإتمام التسجيل"
-                             : "أدخل بيانات سجلك التجاري لإتمام التسجيل")
+                        Text("أدخل رقم هويتك لإتمام التسجيل")
                             .font(.tBody)
                             .foregroundColor(.tSubtext)
                     }
                     .padding(.top, 8)
 
-                    if accountType == "individual" {
-                        TField(label: "رقم الهوية الوطنية", placeholder: "10 أرقام", text: $nationalId)
-                            .keyboardType(.numberPad)
-                        Text("أو")
-                            .font(.tCaption)
-                            .foregroundColor(.tSubtext)
-                            .frame(maxWidth: .infinity)
-                        TField(label: "رقم الإقامة", placeholder: "10 أرقام", text: $iqama)
-                            .keyboardType(.numberPad)
-                    } else {
-                        TField(label: "رقم السجل التجاري", placeholder: "أدخل رقم السجل التجاري", text: $crNumber)
-                            .keyboardType(.numberPad)
-                        TField(label: "اسم المنشأة", placeholder: "كما هو في السجل التجاري", text: $businessName)
-                    }
+                    TField(label: "رقم الهوية الوطنية", placeholder: "10 أرقام", text: $nationalId)
+                        .keyboardType(.numberPad)
+                    Text("أو")
+                        .font(.tCaption)
+                        .foregroundColor(.tSubtext)
+                        .frame(maxWidth: .infinity)
+                    TField(label: "رقم الإقامة", placeholder: "10 أرقام", text: $iqama)
+                        .keyboardType(.numberPad)
 
                     if let error = vm.errorMessage {
                         Text(error)
@@ -298,26 +191,16 @@ struct RegistrationDetailView: View {
     }
 
     private var isValid: Bool {
-        accountType == "individual"
-            ? (!nationalId.isEmpty || !iqama.isEmpty)
-            : (!crNumber.isEmpty && !businessName.isEmpty)
+        !nationalId.isEmpty || !iqama.isEmpty
     }
 
     private func submit() async {
-        if accountType == "individual" {
-            await vm.registerIndividual(
-                phone: phone, otp: otp,
-                nationalId: nationalId.isEmpty ? nil : nationalId,
-                iqama: iqama.isEmpty ? nil : iqama,
-                authState: authState
-            )
-        } else {
-            await vm.registerBusiness(
-                phone: phone, otp: otp,
-                crNumber: crNumber, businessName: businessName,
-                authState: authState
-            )
-        }
+        await vm.registerIndividual(
+            phone: phone, otp: otp,
+            nationalId: nationalId.isEmpty ? nil : nationalId,
+            iqama: iqama.isEmpty ? nil : iqama,
+            authState: authState
+        )
     }
 }
 

@@ -5,45 +5,74 @@ import PDFKit
 
 struct CertificatesListView: View {
 
-    @State private var certificates: [Certificate] = []
+    private enum Segment: String, CaseIterable {
+        case bought = "مشترياتي"
+        case sold   = "بعتها"
+    }
+
+    @State private var segment: Segment = .bought
+    @State private var boughtCertificates: [Certificate] = []
+    @State private var soldCertificates: [Certificate] = []
     @State private var isLoading = false
+
+    private var visibleCertificates: [Certificate] {
+        segment == .bought ? boughtCertificates : soldCertificates
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.tSurface.ignoresSafeArea()
-                if isLoading {
-                    ProgressView().tint(.tPrimary)
-                } else if certificates.isEmpty {
-                    VStack(spacing: 12) {
-                        Image(systemName: "checkmark.seal")
-                            .font(.system(size: 48)).foregroundColor(.tSubtext.opacity(0.3))
-                        Text("لا توجد شهادات بعد").font(.tBodyBold).foregroundColor(.tSubtext)
-                        Text("ستظهر شهاداتك هنا بعد اكتمال أول معاملة توثيق")
-                            .font(.tCaption).foregroundColor(.tSubtext).multilineTextAlignment(.center)
+                VStack(spacing: 0) {
+                    Picker("", selection: $segment) {
+                        ForEach(Segment.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                     }
-                    .padding(40)
-                } else {
-                    List(certificates) { cert in
-                        NavigationLink(destination: CertificateDetailView(certificate: cert)) {
-                            CertificateRow(certificate: cert)
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+
+                    if isLoading {
+                        Spacer()
+                        ProgressView().tint(.tPrimary)
+                        Spacer()
+                    } else if visibleCertificates.isEmpty {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            Image(systemName: "checkmark.seal")
+                                .font(.system(size: 48)).foregroundColor(.tSubtext.opacity(0.3))
+                            Text(segment == .bought ? "لا توجد شهادات بعد" : "لا توجد عقود بعتها بعد")
+                                .font(.tBodyBold).foregroundColor(.tSubtext)
+                            Text(segment == .bought
+                                 ? "ستظهر شهاداتك هنا بعد اكتمال أول معاملة توثيق"
+                                 : "إن كنت قد بعت جهازاً لمستخدم تواتر باستخدام نفس رقم هويتك/إقامتك، ستظهر عقود البيع هنا بعد توثيق هويتك")
+                                .font(.tCaption).foregroundColor(.tSubtext).multilineTextAlignment(.center)
                         }
-                        .listRowBackground(Color.tBackground)
-                        .listRowSeparatorTint(Color.tBorder)
+                        .padding(40)
+                        Spacer()
+                    } else {
+                        List(visibleCertificates) { cert in
+                            NavigationLink(destination: CertificateDetailView(certificate: cert)) {
+                                CertificateRow(certificate: cert)
+                            }
+                            .listRowBackground(Color.tBackground)
+                            .listRowSeparatorTint(Color.tBorder)
+                        }
+                        .listStyle(.plain)
                     }
-                    .listStyle(.plain)
                 }
             }
             .navigationTitle("شهاداتي")
-            .task {
-                isLoading = true
-                certificates = (try? await APIClient.shared.request(.myCertificates, as: [Certificate].self)) ?? []
-                isLoading = false
-            }
-            .refreshable {
-                certificates = (try? await APIClient.shared.request(.myCertificates, as: [Certificate].self)) ?? []
-            }
+            .task { await loadAll() }
+            .refreshable { await loadAll() }
         }
+    }
+
+    private func loadAll() async {
+        isLoading = true
+        async let bought = APIClient.shared.request(.myCertificates, as: [Certificate].self)
+        async let sold   = APIClient.shared.request(.soldByMeCertificates, as: [Certificate].self)
+        boughtCertificates = (try? await bought) ?? []
+        soldCertificates   = (try? await sold) ?? []
+        isLoading = false
     }
 }
 
