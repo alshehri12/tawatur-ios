@@ -17,7 +17,7 @@ struct MainTabView: View {
                 .tag(TabRouter.transactions)
 
             CertificatesListView()
-                .tabItem { Label("شهاداتي", systemImage: "doc.badge.checkmark") }
+                .tabItem { Label("شهاداتي", systemImage: "doc.text.fill") }
                 .tag(TabRouter.certificates)
 
             ProfileView()

@@ -17,7 +17,10 @@ final class HomeViewModel: ObservableObject {
         async let requestsCall = APIClient.shared.request(.pendingSellerRequests, as: [Transaction].self)
         do {
             let txns = try await txnsCall
-            pendingTransactions   = txns.filter { $0.isPending }
+            // myTransactions now includes both roles — pending-as-seller is
+            // already its own section (sellerRequests) below, so exclude it
+            // here to avoid showing the same request twice.
+            pendingTransactions   = txns.filter { $0.isPending && !$0.isSellerRole }
             completedTransactions = txns.filter { $0.isApproved }
         } catch { errorMessage = error.localizedDescription }
         sellerRequests = (try? await requestsCall) ?? []
@@ -169,10 +172,18 @@ struct CompletedTransactionCard: View {
                 .background(Color.tSuccess.opacity(0.1)).cornerRadius(10)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(transaction.productSummary.brand) \(transaction.productSummary.model)")
-                    .font(.tBodyBold).foregroundColor(.tText)
-                if let seller = transaction.sellerFullName, !seller.isEmpty {
-                    Text("من: \(seller)").font(.tCaption).foregroundColor(.tSubtext)
+                HStack(spacing: 6) {
+                    Text("\(transaction.productSummary.brand) \(transaction.productSummary.model)")
+                        .font(.tBodyBold).foregroundColor(.tText)
+                    Text(transaction.roleLabel)
+                        .font(.tSmall).foregroundColor(transaction.isSellerRole ? .tWarning : .tPrimary)
+                        .padding(.horizontal, 7).padding(.vertical, 2)
+                        .background((transaction.isSellerRole ? Color.tWarning : Color.tPrimary).opacity(0.1))
+                        .cornerRadius(6)
+                }
+                if let counterparty = transaction.counterpartyName, !counterparty.isEmpty {
+                    Text(transaction.isSellerRole ? "المشتري: \(counterparty)" : "البائع: \(counterparty)")
+                        .font(.tCaption).foregroundColor(.tSubtext)
                 } else {
                     Text(transaction.productSummary.categoryDisplay)
                         .font(.tCaption).foregroundColor(.tSubtext)

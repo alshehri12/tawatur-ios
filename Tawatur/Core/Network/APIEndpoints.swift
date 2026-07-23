@@ -39,10 +39,10 @@ extension APIEndpoint {
               requiresAuth: false)
     }
 
-    static func registerIndividual(phone: String, otp: String,
+    static func registerIndividual(phone: String, otp: String, fullName: String,
                                    nationalId: String?, iqama: String?) -> APIEndpoint {
         .init("auth/register/individual/", method: .POST,
-              body: ["phone_number": phone, "otp": otp,
+              body: ["phone_number": phone, "otp": otp, "full_name": fullName,
                      "national_id": nationalId, "iqama": iqama],
               requiresAuth: false)
     }
@@ -62,9 +62,9 @@ extension APIEndpoint {
         .init("auth/logout/", method: .POST, body: ["refresh": refresh])
     }
 
-    static func verifyIndividual(nationalId: String?, iqama: String?) -> APIEndpoint {
+    static func verifyIndividual(fullName: String, nationalId: String?, iqama: String?) -> APIEndpoint {
         .init("auth/verify/individual/", method: .POST,
-              body: ["national_id": nationalId, "iqama": iqama])
+              body: ["full_name": fullName, "national_id": nationalId, "iqama": iqama])
     }
 
     static func verifyBusiness(crNumber: String, businessName: String) -> APIEndpoint {

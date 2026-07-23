@@ -131,6 +131,7 @@ struct RegistrationDetailView: View {
     @StateObject private var vm = AuthViewModel()
     @EnvironmentObject var authState: AuthState
 
+    @State private var fullName = ""
     @State private var nationalId = ""
     @State private var iqama = ""
 
@@ -145,11 +146,13 @@ struct RegistrationDetailView: View {
                         Text("بيانات الهوية")
                             .font(.tTitle)
                             .foregroundColor(.tText)
-                        Text("أدخل رقم هويتك لإتمام التسجيل")
+                        Text("هذه البيانات تظهر على الشهادات والعقود عند إتمام أي عملية")
                             .font(.tBody)
                             .foregroundColor(.tSubtext)
                     }
                     .padding(.top, 8)
+
+                    TField(label: "الاسم الكامل", placeholder: "مثال: محمد عبدالله السالم", text: $fullName)
 
                     TField(label: "رقم الهوية الوطنية", placeholder: "10 أرقام", text: $nationalId)
                         .keyboardType(.numberPad)
@@ -191,12 +194,13 @@ struct RegistrationDetailView: View {
     }
 
     private var isValid: Bool {
-        !nationalId.isEmpty || !iqama.isEmpty
+        !fullName.trimmingCharacters(in: .whitespaces).isEmpty
+            && (!nationalId.isEmpty || !iqama.isEmpty)
     }
 
     private func submit() async {
         await vm.registerIndividual(
-            phone: phone, otp: otp,
+            phone: phone, otp: otp, fullName: fullName.trimmingCharacters(in: .whitespaces),
             nationalId: nationalId.isEmpty ? nil : nationalId,
             iqama: iqama.isEmpty ? nil : iqama,
             authState: authState

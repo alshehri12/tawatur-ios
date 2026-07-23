@@ -54,7 +54,7 @@ final class AuthViewModel: ObservableObject {
     }
 
     @MainActor
-    func registerIndividual(phone: String, otp: String,
+    func registerIndividual(phone: String, otp: String, fullName: String,
                              nationalId: String?, iqama: String?,
                              authState: AuthState) async {
         isLoading = true
@@ -63,7 +63,7 @@ final class AuthViewModel: ObservableObject {
 
         do {
             let response = try await APIClient.shared.request(
-                .registerIndividual(phone: phone, otp: otp,
+                .registerIndividual(phone: phone, otp: otp, fullName: fullName,
                                     nationalId: nationalId?.isEmpty == false ? nationalId : nil,
                                     iqama: iqama?.isEmpty == false ? iqama : nil),
                 as: AuthResponse.self

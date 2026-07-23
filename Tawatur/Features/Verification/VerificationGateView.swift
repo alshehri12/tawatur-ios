@@ -77,13 +77,13 @@ final class VerificationViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var success = false
 
-    func submitIndividual(nationalId: String?, iqama: String?, authState: AuthState) async {
+    func submitIndividual(fullName: String, nationalId: String?, iqama: String?, authState: AuthState) async {
         isLoading = true; errorMessage = nil
         defer { isLoading = false }
         do {
             struct R: Decodable { let verificationStatus: String }
             _ = try await APIClient.shared.request(
-                .verifyIndividual(nationalId: nationalId, iqama: iqama), as: R.self)
+                .verifyIndividual(fullName: fullName, nationalId: nationalId, iqama: iqama), as: R.self)
             await authState.refreshProfile()
             success = true
         } catch { errorMessage = error.localizedDescription }
@@ -105,6 +105,7 @@ final class VerificationViewModel: ObservableObject {
 struct VerificationView: View {
     @EnvironmentObject var authState: AuthState
     @StateObject private var vm = VerificationViewModel()
+    @State private var fullName = ""
     @State private var nationalId = ""
     @State private var iqama = ""
     @State private var crNumber = ""
@@ -121,6 +122,7 @@ struct VerificationView: View {
                         .font(.tTitle).foregroundColor(.tText).padding(.top, 8)
 
                     if isIndividual {
+                        TField(label: "الاسم الكامل", placeholder: "مثال: محمد عبدالله السالم", text: $fullName)
                         TField(label: "رقم الهوية الوطنية", placeholder: "10 أرقام", text: $nationalId)
                             .keyboardType(.numberPad)
                         Text("أو").font(.tCaption).foregroundColor(.tSubtext).frame(maxWidth: .infinity)
@@ -140,6 +142,7 @@ struct VerificationView: View {
                         Task {
                             if isIndividual {
                                 await vm.submitIndividual(
+                                    fullName: fullName.trimmingCharacters(in: .whitespaces),
                                     nationalId: nationalId.isEmpty ? nil : nationalId,
                                     iqama: iqama.isEmpty ? nil : iqama,
                                     authState: authState)

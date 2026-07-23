@@ -15,6 +15,8 @@ struct Transaction: Decodable, Identifiable {
     let approvedAt: Date?
     let productSummary: ProductSummary
     let isInitiator: Bool?
+    let role: String?               // "buyer" | "seller"
+    let counterpartyName: String?   // seller's name if I'm the buyer, buyer's name if I'm the seller
 
     // Detail-only fields
     let notes: String?
@@ -54,6 +56,8 @@ extension Transaction {
     var isPending: Bool  { status == "pending" }
     var isApproved: Bool { status == "approved" }
     var isExpired: Bool  { status == "expired" }
+    var isSellerRole: Bool { role == "seller" }
+    var roleLabel: String { isSellerRole ? "بيع" : "شراء" }
 
     var statusColor: Color {
         switch status {

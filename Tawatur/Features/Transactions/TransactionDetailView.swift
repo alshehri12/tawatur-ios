@@ -252,12 +252,23 @@ struct TransactionRow: View {
                 .fill(transaction.statusColor.opacity(0.15))
                 .frame(width: 40, height: 40)
                 .overlay(
-                    Image(systemName: "checkmark.seal")
+                    Image(systemName: transaction.isSellerRole ? "arrow.up.circle" : "arrow.down.circle")
                         .font(.subheadline).foregroundColor(transaction.statusColor)
                 )
             VStack(alignment: .leading, spacing: 3) {
-                Text("\(transaction.productSummary.brand) \(transaction.productSummary.model)")
-                    .font(.tBodyBold).foregroundColor(.tText)
+                HStack(spacing: 6) {
+                    Text("\(transaction.productSummary.brand) \(transaction.productSummary.model)")
+                        .font(.tBodyBold).foregroundColor(.tText)
+                    Text(transaction.roleLabel)
+                        .font(.tSmall).foregroundColor(transaction.isSellerRole ? .tWarning : .tPrimary)
+                        .padding(.horizontal, 7).padding(.vertical, 2)
+                        .background((transaction.isSellerRole ? Color.tWarning : Color.tPrimary).opacity(0.1))
+                        .cornerRadius(6)
+                }
+                if let counterparty = transaction.counterpartyName, !counterparty.isEmpty {
+                    Text(transaction.isSellerRole ? "المشتري: \(counterparty)" : "البائع: \(counterparty)")
+                        .font(.tCaption).foregroundColor(.tSubtext)
+                }
                 Text(transaction.statusDisplay)
                     .font(.tCaption).foregroundColor(transaction.statusColor)
             }
