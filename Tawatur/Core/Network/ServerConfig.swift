@@ -33,6 +33,16 @@ final class ServerConfig {
         }
     }
 
+    /// Server root — no /api/v1/ suffix. Used for pages mounted at the
+    /// project root, like the public /terms/ and /confirm/ pages.
+    var rootURL: URL {
+        if serverHost.hasPrefix("http") {
+            return URL(string: "\(serverHost)/")!
+        } else {
+            return URL(string: "http://\(serverHost):8000/")!
+        }
+    }
+
     /// Host string for NWConnection ping (hostname or IP only, no scheme/port)
     var pingHost: String {
         if serverHost.hasPrefix("http") {

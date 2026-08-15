@@ -39,6 +39,10 @@ final class NewPurchaseViewModel: ObservableObject {
     @Published var sellerTerms = ""
     @Published var notes       = ""
 
+    // Terms & conditions — mandatory before submitting
+    @Published var agreedToTerms = false
+    @Published var showTerms     = false
+
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var createdTransaction: Transaction?
@@ -56,7 +60,8 @@ final class NewPurchaseViewModel: ObservableObject {
 
     var canSubmitStep2: Bool {
         !sellerIdNumber.isEmpty && !sellerFirstName.isEmpty &&
-        !sellerLastName.isEmpty && !sellerMobile.isEmpty && !sellerCity.isEmpty
+        !sellerLastName.isEmpty && !sellerMobile.isEmpty && !sellerCity.isEmpty &&
+        agreedToTerms
     }
 
     func submit() async {
@@ -352,6 +357,30 @@ struct NewPurchaseStep2Seller: View {
                 }
                 .padding(12).background(Color.tPrimary.opacity(0.06)).cornerRadius(10)
 
+                HStack(alignment: .center, spacing: 8) {
+                    Button {
+                        vm.agreedToTerms.toggle()
+                    } label: {
+                        Image(systemName: vm.agreedToTerms ? "checkmark.square.fill" : "square")
+                            .font(.system(size: 20))
+                            .foregroundColor(vm.agreedToTerms ? .tPrimary : .tSubtext)
+                    }
+                    .buttonStyle(.plain)
+
+                    Text("أوافق على")
+                        .font(.tBody).foregroundColor(.tText)
+
+                    Button {
+                        vm.showTerms = true
+                    } label: {
+                        Text("الشروط والأحكام")
+                            .font(.tBody).foregroundColor(.tPrimary).underline()
+                    }
+                    .buttonStyle(.plain)
+
+                    Spacer(minLength: 0)
+                }
+
                 if let error = vm.errorMessage {
                     Text(error).font(.tCaption).foregroundColor(.tDanger)
                         .padding(12).background(Color.tDanger.opacity(0.08)).cornerRadius(8)
@@ -383,6 +412,9 @@ struct NewPurchaseStep2Seller: View {
             }
             .padding(.horizontal, 20)
             .padding(.top, 8)
+        }
+        .sheet(isPresented: $vm.showTerms) {
+            TermsSheet()
         }
     }
 }
