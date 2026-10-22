@@ -1,0 +1,357 @@
+<title>Tawatur Deal Details</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Readex+Pro:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: same shell as home.html — iPhone frame on desktop, full-bleed on phones. Forest band with the device + status, overlapping "next step" card, then timeline, parties, device facts. Light-only by choice: it is a screen mock. */
+:root {
+  color-scheme: light;
+  --forest: #0B3B2C;
+  --forest-2: #0F4D3A;
+  --green: #12B886;
+  --green-deep: #0A8F68;
+  --mint: #E6F7F0;
+  --page: #F3F6F4;
+  --card: #FFFFFF;
+  --ink: #102019;
+  --muted: #6C7D75;
+  --faint: #A3B2AB;
+  --line: #E8EEEA;
+  --amber: #B86200;
+  --amber-bg: #FFF3E0;
+  --red: #C93B3B;
+  --red-bg: #FDECEC;
+  --display: 'Readex Pro', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --body: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: #DCE5E0;
+  color: var(--ink);
+  font-family: var(--body);
+  display: flex; align-items: center; justify-content: center;
+  padding-block: 24px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+.ic { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.ltr { direction: ltr; unicode-bidi: isolate; }
+
+/* phone frame */
+.phone {
+  width: 390px; max-width: 100%;
+  height: 844px; max-height: calc(100vh - 48px);
+  background: var(--page);
+  border-radius: 48px;
+  box-shadow: 0 0 0 10px #101814, 0 30px 80px rgba(8, 30, 22, .35);
+  overflow: hidden; position: relative;
+  display: flex; flex-direction: column;
+}
+.scroll { flex: 1; overflow-y: auto; scrollbar-width: none; padding-bottom: 40px; }
+.scroll::-webkit-scrollbar { display: none; }
+
+.status { display: flex; justify-content: space-between; align-items: center; padding: 16px 30px 0; color: #fff; font-weight: 600; font-size: 15px; direction: ltr; font-family: -apple-system, system-ui, sans-serif; }
+.status .r { display: flex; gap: 6px; align-items: center; }
+.status svg { fill: #fff; }
+
+/* band */
+.band {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(18,184,134,.32), transparent 55%),
+    radial-gradient(80% 60% at 100% 100%, rgba(18,184,134,.14), transparent 60%),
+    linear-gradient(160deg, var(--forest-2), var(--forest));
+  color: #fff;
+  padding: 0 20px 70px;
+  border-radius: 0 0 32px 32px;
+}
+.nav { display: flex; align-items: center; justify-content: space-between; padding-top: 14px; }
+.nav h1 { font-size: 16px; font-weight: 600; font-family: var(--body); }
+.round { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.1); display: grid; place-items: center; }
+.round .ic { width: 19px; height: 19px; }
+
+.device { margin-top: 22px; display: flex; gap: 14px; align-items: center; }
+.device-art { width: 64px; height: 64px; border-radius: 20px; background: rgba(255,255,255,.1); display: grid; place-items: center; color: #9BE8C9; flex: none; }
+.device-art .ic { width: 32px; height: 32px; stroke-width: 1.5; }
+.device-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.device-info h2 { font-family: var(--display); font-weight: 600; font-size: 22px; line-height: 1.25; }
+.device-info span { font-size: 13px; color: #A8CFC0; }
+.price-row { margin-top: 20px; display: flex; align-items: flex-end; justify-content: space-between; }
+.price { font-family: var(--display); font-weight: 600; font-size: 34px; line-height: 1; }
+.price small { font-family: var(--body); font-size: 14px; font-weight: 500; color: #A8CFC0; margin-inline-start: 4px; }
+.state { display: inline-flex; align-items: center; gap: 6px; background: rgba(255,181,71,.16); color: #FFC56E; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 99px; }
+.state::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: pulse 1.6s infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+
+/* content */
+.wrap { padding: 0 16px; display: flex; flex-direction: column; gap: 22px; }
+.card { background: var(--card); border-radius: 24px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+
+/* next step — overlaps band */
+.next { margin-top: -50px; box-shadow: 0 12px 30px rgba(11, 59, 44, .12); }
+.next-head { display: flex; align-items: center; gap: 10px; }
+.next-head .num { width: 30px; height: 30px; border-radius: 50%; background: var(--amber-bg); color: var(--amber); display: grid; place-items: center; flex: none; }
+.next-head .num .ic { width: 16px; height: 16px; stroke-width: 2.2; }
+.next-head h3 { font-size: 16px; font-weight: 600; }
+.next p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+.linkbox { display: flex; align-items: center; gap: 8px; background: var(--page); border-radius: 14px; padding: 6px 6px 6px 12px; padding-inline-start: 14px; }
+.linkbox code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--ink); direction: ltr; text-align: left; }
+.linkbox button { height: 38px; padding: 0 14px; border-radius: 11px; background: var(--forest); color: #fff; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; flex: none; }
+.linkbox button.done { background: var(--green); }
+.linkbox button .ic { width: 16px; height: 16px; }
+.share { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.share button { height: 46px; border-radius: 14px; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.wa { background: #E7F8EE; color: #128C4A; }
+.sms { background: var(--page); color: var(--ink); }
+.expiry { display: flex; flex-direction: column; gap: 6px; }
+.expiry-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+.expiry-row b { color: var(--amber); font-weight: 600; font-variant-numeric: tabular-nums; font-family: var(--display); }
+.bar { height: 6px; border-radius: 3px; background: var(--page); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 88%; border-radius: 3px; background: linear-gradient(90deg, #FFB547, #F08C00); transition: width 1s linear; }
+
+/* section titles */
+.sec { display: flex; flex-direction: column; gap: 10px; }
+.sec > h2 { font-family: var(--display); font-weight: 600; font-size: 17px; padding: 0 4px; }
+
+/* timeline */
+.tl { display: flex; flex-direction: column; }
+.step { display: grid; grid-template-columns: 30px 1fr; gap: 12px; position: relative; padding-bottom: 20px; }
+.step:last-child { padding-bottom: 0; }
+.step::after { content: ""; position: absolute; right: 14px; top: 32px; bottom: 2px; width: 2px; border-radius: 1px; background: var(--line); }
+.step:last-child::after { display: none; }
+.step.done::after { background: var(--green); }
+.dot { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--page); color: var(--faint); }
+.dot .ic { width: 15px; height: 15px; stroke-width: 2.4; }
+.step.done .dot { background: var(--green); color: #fff; }
+.step.now .dot { background: var(--amber-bg); color: var(--amber); box-shadow: 0 0 0 5px rgba(255,181,71,.18); }
+.step b { display: block; font-weight: 600; font-size: 15px; }
+.step span { font-size: 12.5px; color: var(--muted); }
+.step.todo b { color: var(--faint); }
+
+/* parties */
+.party { display: flex; align-items: center; gap: 12px; }
+.party + .party { padding-top: 14px; border-top: 1px solid var(--line); }
+.ava { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-weight: 600; font-size: 17px; flex: none; }
+.ava.me { background: #FDE7C8; color: #7A4A00; }
+.ava.them { background: #E4E9F7; color: #3F5BA9; }
+.party-main { flex: 1; min-width: 0; }
+.party-main small { display: block; font-size: 12px; color: var(--faint); font-weight: 600; }
+.party-main b { font-weight: 600; font-size: 15px; }
+.party-main span { display: block; font-size: 12.5px; color: var(--muted); }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+.badge .ic { width: 14px; height: 14px; stroke-width: 2.2; }
+.badge.ok { background: var(--mint); color: var(--green-deep); }
+.badge.wait { background: var(--amber-bg); color: var(--amber); }
+
+/* facts */
+.facts { padding: 4px 18px; gap: 0; }
+.fact { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.fact:last-child { border-bottom: 0; }
+.fact span { color: var(--muted); }
+.fact b { font-weight: 600; text-align: left; }
+
+.cancel { height: 50px; border-radius: 16px; color: var(--red); font-weight: 600; font-size: 15px; background: transparent; }
+.cancel:active { background: var(--red-bg); }
+.ref { text-align: center; font-size: 12px; color: var(--faint); }
+
+/* bottom sheet */
+.scrim { position: absolute; inset: 0; background: rgba(8, 24, 18, .45); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 5; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--card); border-radius: 30px 30px 0 0; padding: 10px 20px 34px; display: flex; flex-direction: column; gap: 14px; transform: translateY(105%); transition: transform .28s cubic-bezier(.2,.8,.2,1); }
+.grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); align-self: center; }
+.sheet .warn { width: 56px; height: 56px; border-radius: 50%; background: var(--red-bg); color: var(--red); display: grid; place-items: center; align-self: center; margin-top: 6px; }
+.sheet .warn .ic { width: 26px; height: 26px; }
+.sheet h3 { text-align: center; font-family: var(--display); font-weight: 600; font-size: 19px; }
+.sheet p { text-align: center; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.sheet .btn { height: 52px; border-radius: 16px; font-weight: 600; font-size: 15px; }
+.btn-red { background: var(--red); color: #fff; }
+.btn-soft { background: var(--page); color: var(--ink); }
+.open .scrim { opacity: 1; pointer-events: auto; }
+.open .sheet { transform: none; }
+
+.toast { position: absolute; top: 60px; left: 50%; transform: translate(-50%, -20px); opacity: 0; background: var(--ink); color: #fff; font-size: 13px; padding: 10px 16px; border-radius: 14px; transition: .25s; pointer-events: none; white-space: nowrap; display: flex; gap: 6px; align-items: center; z-index: 7; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast .ic { width: 16px; height: 16px; color: var(--green); stroke-width: 2.6; }
+.home-ind { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); width: 134px; height: 5px; border-radius: 3px; background: #101814; z-index: 8; }
+
+@media (max-width: 500px) {
+  body { padding: 0; display: block; background: var(--page); }
+  .phone { width: 100%; height: 100vh; height: 100dvh; max-height: none; border-radius: 0; box-shadow: none; }
+  .status, .home-ind { display: none; }
+  .band { padding-top: env(safe-area-inset-top, 0px); }
+  .scroll { padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)); }
+  .sheet { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) { .state::before { animation: none; } .sheet, .scrim, .toast, .bar i { transition: none; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="3"/><path d="M10.5 18.5h3"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18.5" cy="12" r="1.2"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M20 4L3.5 11l6.5 2.5L12.5 20z"/><path d="M10 13.5l4-4"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 18.5l-1.5 3 4-1.2A8.5 8.5 0 1 0 5 18.5z"/></symbol>
+  <symbol id="i-sms" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="12" rx="3"/><path d="M8 21l3-4M8 11h8"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5L19 4M16 7l2 2"/></symbol>
+  <symbol id="i-seal" viewBox="0 0 24 24"><path d="M12 3l2.2 1.6 2.7-.2.9 2.6 2.3 1.4-.8 2.6.8 2.6-2.3 1.4-.9 2.6-2.7-.2L12 21l-2.2-1.6-2.7.2-.9-2.6-2.3-1.4.8-2.6-.8-2.6L6.2 7l.9-2.6 2.7.2z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6L12 3z"/><path d="M8.8 12l2.2 2.2 4.3-4.4"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+</svg>
+
+<div class="phone" id="phone" dir="rtl" lang="ar">
+  <div class="scroll">
+
+    <header class="band">
+      <div class="status"><span>9:41</span><span class="r">
+        <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+        <svg width="26" height="12" viewBox="0 0 26 12"><rect x=".5" y=".5" width="22" height="11" rx="3.5" fill="none" stroke="#fff" opacity=".5"/><rect x="2" y="2" width="17" height="8" rx="2"/><rect x="24" y="4" width="1.6" height="4" rx=".8" opacity=".5"/></svg>
+      </span></div>
+
+      <div class="nav">
+        <button class="round" type="button" aria-label="رجوع"><svg class="ic"><use href="#i-back"/></svg></button>
+        <h1>طلب شراء</h1>
+        <button class="round" type="button" aria-label="المزيد"><svg class="ic"><use href="#i-more"/></svg></button>
+      </div>
+
+      <div class="device">
+        <div class="device-art"><svg class="ic"><use href="#i-phone"/></svg></div>
+        <div class="device-info">
+          <h2>iPhone 15 Pro</h2>
+          <span>256 جيجا · تيتانيوم طبيعي · مستعمل</span>
+        </div>
+      </div>
+
+      <div class="price-row">
+        <div class="price">3,800<small>ر.س</small></div>
+        <span class="state">بانتظار البائع</span>
+      </div>
+    </header>
+
+    <div class="wrap">
+
+      <section class="card next">
+        <div class="next-head">
+          <span class="num"><svg class="ic"><use href="#i-send"/></svg></span>
+          <h3>أرسل رابط التأكيد للبائع</h3>
+        </div>
+        <p>يفتح خالد الرابط ويؤكد البيع برمز يصل إلى جواله. لا يحتاج حساباً في تواتر.</p>
+        <div class="linkbox">
+          <code>tawatur.sa/confirm/7f3c2a91</code>
+          <button type="button" id="copy"><svg class="ic"><use href="#i-copy"/></svg><span>نسخ</span></button>
+        </div>
+        <div class="share">
+          <button class="wa" type="button"><svg class="ic"><use href="#i-chat"/></svg>واتساب</button>
+          <button class="sms" type="button"><svg class="ic"><use href="#i-sms"/></svg>رسالة نصية</button>
+        </div>
+        <div class="expiry">
+          <div class="expiry-row"><span>ينتهي الرابط خلال</span><b class="ltr" id="countdown">21:14:09</b></div>
+          <div class="bar"><i id="bar"></i></div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>مراحل الطلب</h2>
+        <div class="card">
+          <div class="tl">
+            <div class="step done"><span class="dot"><svg class="ic"><use href="#i-check"/></svg></span><div><b>أرسلت طلب الشراء</b><span>اليوم، 10:14 ص</span></div></div>
+            <div class="step now"><span class="dot"><svg class="ic"><use href="#i-key"/></svg></span><div><b>تأكيد البائع برمز الجوال</b><span>بانتظار خالد العتيبي</span></div></div>
+            <div class="step todo"><span class="dot"><svg class="ic"><use href="#i-seal"/></svg></span><div><b>إصدار شهادة الملكية</b><span>تلقائياً فور تأكيد البائع</span></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>طرفا العملية</h2>
+        <div class="card">
+          <div class="party">
+            <div class="ava them">خ</div>
+            <div class="party-main"><small>البائع</small><b>خالد العتيبي</b><span><span class="ltr">+966 55 ••• ••41</span> · الرياض</span></div>
+            <span class="badge wait"><svg class="ic"><use href="#i-clock"/></svg>لم يؤكد</span>
+          </div>
+          <div class="party">
+            <div class="ava me">ع</div>
+            <div class="party-main"><small>المشتري</small><b>عبدالرحمن الشهري (أنت)</b><span>هوية وطنية ••••3921</span></div>
+            <span class="badge ok"><svg class="ic"><use href="#i-shield"/></svg>موثّق</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>بيانات الجهاز</h2>
+        <div class="card facts">
+          <div class="fact"><span>الفئة</span><b>هاتف جوال</b></div>
+          <div class="fact"><span>الماركة والطراز</span><b>Apple · iPhone 15 Pro</b></div>
+          <div class="fact"><span>IMEI</span><b class="ltr">35 467289 103948 2</b></div>
+          <div class="fact"><span>الحالة</span><b>مستعمل</b></div>
+          <div class="fact"><span>السعر المتفق عليه</span><b>3,800 ر.س</b></div>
+        </div>
+      </section>
+
+      <button class="cancel" type="button" id="cancel">إلغاء الطلب</button>
+      <p class="ref">رقم الطلب <span class="ltr">7f3c2a91</span> · أُنشئ 22 أكتوبر 2026</p>
+
+    </div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <span class="grab"></span>
+    <span class="warn"><svg class="ic"><use href="#i-x"/></svg></span>
+    <h3 id="sheet-title">إلغاء طلب الشراء؟</h3>
+    <p>سيتوقف رابط التأكيد فوراً ولن يتمكن خالد من فتحه. يمكنك إنشاء طلب جديد لاحقاً.</p>
+    <button class="btn btn-red" type="button" id="confirm-cancel">نعم، ألغِ الطلب</button>
+    <button class="btn btn-soft" type="button" id="keep">رجوع</button>
+  </div>
+
+  <div class="toast" id="toast" role="status"><svg class="ic"><use href="#i-check"/></svg><span>تم نسخ الرابط</span></div>
+  <div class="home-ind"></div>
+</div>
+
+<script>
+const phone = document.getElementById('phone');
+const toast = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toast.querySelector('span').textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+const copyBtn = document.getElementById('copy');
+copyBtn.addEventListener('click', () => {
+  navigator.clipboard?.writeText('https://tawatur.sa/confirm/7f3c2a91').catch(() => {});
+  copyBtn.classList.add('done');
+  copyBtn.querySelector('span').textContent = 'تم';
+  showToast('تم نسخ الرابط، أرسله للبائع');
+  setTimeout(() => { copyBtn.classList.remove('done'); copyBtn.querySelector('span').textContent = 'نسخ'; }, 2000);
+});
+
+// live countdown — link lifetime is 24h, ~21h14m left in this sample
+const TOTAL = 24 * 3600;
+let left = 21 * 3600 + 14 * 60 + 9;
+const cd = document.getElementById('countdown');
+const bar = document.getElementById('bar');
+const pad = n => String(n).padStart(2, '0');
+function tick() {
+  cd.textContent = `${pad(Math.floor(left / 3600))}:${pad(Math.floor(left % 3600 / 60))}:${pad(left % 60)}`;
+  bar.style.width = (left / TOTAL * 100).toFixed(2) + '%';
+  if (left > 0) left--;
+}
+tick(); setInterval(tick, 1000);
+
+// cancel sheet
+const open = () => phone.classList.add('open');
+const close = () => phone.classList.remove('open');
+document.getElementById('cancel').addEventListener('click', open);
+document.getElementById('scrim').addEventListener('click', close);
+document.getElementById('keep').addEventListener('click', close);
+document.getElementById('confirm-cancel').addEventListener('click', () => { close(); showToast('هذا نموذج للتصميم فقط'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+</script>
