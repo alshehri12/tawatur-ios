@@ -69,6 +69,7 @@ struct HomeView: View {
 
     @State private var path: [String] = []
     @State private var showNewPurchase = false
+    @State private var openAfterPurchase: String?
     @State private var showNotifications = false
     @State private var rejecting: Transaction?
     @State private var showScanner = false
@@ -118,8 +119,12 @@ struct HomeView: View {
             .navigationDestination(for: String.self) { id in
                 TransactionDetailView(transactionId: id)
             }
-            .sheet(isPresented: $showNewPurchase, onDismiss: { Task { await vm.load() } }) {
-                NewPurchaseView()
+            .fullScreenCover(isPresented: $showNewPurchase, onDismiss: {
+                UIApplication.shared.statusBarStyle = .lightContent   // back on the forest band
+                if let id = openAfterPurchase { openAfterPurchase = nil; path.append(id) }
+                Task { await vm.load() }
+            }) {
+                NewPurchaseView { openAfterPurchase = $0 }
             }
             .sheet(isPresented: $showNotifications) {
                 HomeNotificationsSheet(requests: vm.sellerRequests,
