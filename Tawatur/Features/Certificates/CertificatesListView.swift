@@ -61,6 +61,7 @@ struct CertificatesListView: View {
                 }
             }
             .navigationTitle("شهاداتي")
+            .tTabRoot(TabRouter.certificates)
             .task { await loadAll() }
             .refreshable { await loadAll() }
         }

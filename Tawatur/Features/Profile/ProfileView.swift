@@ -27,7 +27,7 @@ struct ProfileView: View {
                                     .font(.title).foregroundColor(.tPrimary)
                                 )
 
-                            Text(authState.user?.businessName ?? "مستخدم تواتر")
+                            Text(authState.user?.displayName ?? "مستخدم تواتر")
                                 .font(.tTitle2).foregroundColor(.tText)
 
                             Text(authState.user?.userTypeLabel ?? "")
@@ -107,6 +107,7 @@ struct ProfileView: View {
                 }
             }
             .navigationTitle("حسابي")
+            .tTabRoot(TabRouter.profile)
             .alert("تسجيل الخروج", isPresented: $showLogoutAlert) {
                 Button("إلغاء", role: .cancel) {}
                 Button("تسجيل الخروج", role: .destructive) {

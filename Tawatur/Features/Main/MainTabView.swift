@@ -1,4 +1,6 @@
-// MainTabView.swift — Root tab bar shown after login + verification.
+// MainTabView.swift — Root tabs shown after login + verification.
+// The system tab bar is hidden; each tab's root screen shows the floating
+// TTabBar (Components.swift) via .tTabRoot(_:).
 
 import SwiftUI
 
@@ -9,22 +11,22 @@ struct MainTabView: View {
     var body: some View {
         TabView(selection: $router.selectedTab) {
             HomeView()
-                .tabItem { Label("الرئيسية", systemImage: "house.fill") }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(TabRouter.home)
 
             MyTransactionsView()
-                .tabItem { Label("معاملاتي", systemImage: "checkmark.seal.fill") }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(TabRouter.transactions)
 
             CertificatesListView()
-                .tabItem { Label("شهاداتي", systemImage: "doc.text.fill") }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(TabRouter.certificates)
 
             ProfileView()
-                .tabItem { Label("حسابي", systemImage: "person.fill") }
+                .toolbar(.hidden, for: .tabBar)
                 .tag(TabRouter.profile)
         }
-        .accentColor(.tPrimary)
+        .tint(.tForest)
         .environmentObject(router)
     }
 }

@@ -9,7 +9,24 @@ struct VerificationGateView: View {
     @EnvironmentObject var authState: AuthState
     @StateObject private var vm = VerificationViewModel()
 
+    /// Individuals who haven't submitted identity go straight to the identity
+    /// form; the waiting screen below is for submitted-but-pending and businesses.
+    private var needsIdentityForm: Bool {
+        let user = authState.user
+        return (user?.isIndividual ?? true)
+            && user?.identitySubmitted == false
+            && user?.canTransact == false
+    }
+
     var body: some View {
+        if needsIdentityForm {
+            NavigationStack { IdentityView(mode: .verify) }
+        } else {
+            gate
+        }
+    }
+
+    private var gate: some View {
         NavigationStack {
             ZStack {
                 Color.tBackground.ignoresSafeArea()

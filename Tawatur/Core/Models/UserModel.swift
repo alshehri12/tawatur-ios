@@ -7,6 +7,7 @@ import Foundation
 struct UserProfile: Decodable, Identifiable {
     let id: String
     let userType: String               // "individual" | "business"
+    let fullName: String?
     let identitySubmitted: Bool
     let absherVerified: Bool
     let businessName: String?
@@ -49,5 +50,17 @@ extension UserProfile {
 
     var userTypeLabel: String {
         isIndividual ? "فرد" : "جهة تجارية"
+    }
+
+    /// Name to show in the UI — full name, then business name, then a fallback.
+    var displayName: String {
+        if let name = fullName, !name.isEmpty { return name }
+        if let name = businessName, !name.isEmpty { return name }
+        return "مستخدم تواتر"
+    }
+
+    /// First word of the display name, for greetings ("مساء الخير، عبدالرحمن").
+    var firstName: String {
+        displayName.split(separator: " ").first.map(String.init) ?? displayName
     }
 }

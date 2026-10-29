@@ -2,7 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Required bundle keys -->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -21,40 +20,45 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-
-	<!-- Network: allow plain HTTP to local dev server (development only) -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
 	</dict>
-
-	<!-- Required for barcode/QR scanning via VisionKit DataScannerViewController -->
-	<key>NSCameraUsageDescription</key>
-	<string>تواتر تستخدم الكاميرا لمسح رمز الباركود أو QR الخاص بالجهاز وملء رقمه التسلسلي تلقائياً.</string>
-
-	<!-- Required for iOS 14+: connecting to LAN IPs (e.g. dev backend on 192.168.x.x) -->
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>تواتر تحتاج إلى الوصول إلى الشبكة المحلية للتواصل مع الخادم.</string>
-
-	<!-- Required alongside NSLocalNetworkUsageDescription to trigger the permission dialog -->
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_http._tcp</string>
 	</array>
-
-	<!-- UI -->
+	<key>NSCameraUsageDescription</key>
+	<string>تواتر تستخدم الكاميرا لمسح رمز الباركود أو QR الخاص بالجهاز وملء رقمه التسلسلي تلقائياً.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>تواتر تحتاج إلى الوصول إلى الشبكة المحلية للتواصل مع الخادم.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>IBMPlexSansArabic-Bold.ttf</string>
+		<string>IBMPlexSansArabic-Medium.ttf</string>
+		<string>IBMPlexSansArabic-Regular.ttf</string>
+		<string>IBMPlexSansArabic-SemiBold.ttf</string>
+		<string>ReadexPro-Bold.ttf</string>
+		<string>ReadexPro-Medium.ttf</string>
+		<string>ReadexPro-SemiBold.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
 	</dict>
 	<key>UILaunchScreen</key>
-	<dict/>
-	<key>UISupportsIndirectInputEvents</key>
-	<true/>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>TawaturLogo</string>
+	</dict>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleDarkContent</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -68,5 +72,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UISupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>

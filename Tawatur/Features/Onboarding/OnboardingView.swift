@@ -1,109 +1,152 @@
 // OnboardingView.swift — Welcome screen shown to unauthenticated users.
-// Explains the platform, then routes to phone entry.
+// Green artwork (tilted phone + three trust chips), headline, then routes to
+// phone entry. Design: "الترحيب" in UIDesign/gallery.html.
 
 import SwiftUI
 
 struct OnboardingView: View {
 
-    @State private var showAuth = false
-
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.tBackground.ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 0) {
+                OnboardingArt()
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
 
-                VStack(spacing: 0) {
-
-                    // ── Hero section ──────────────────────────────────────────
-                    VStack(spacing: 16) {
-                        Spacer(minLength: 60)
-
-                        // Logo
-                        ZStack {
-                            Circle()
-                                .fill(Color.tPrimary.opacity(0.1))
-                                .frame(width: 110, height: 110)
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 50))
-                                .foregroundColor(.tPrimary)
-                        }
-
-                        Text("تواتر")
-                            .font(.tLargeTitle)
-                            .foregroundColor(.tPrimary)
-
-                        Text("منصة توثيق الملكية الموثوقة في المملكة العربية السعودية")
-                            .font(.tBody)
-                            .foregroundColor(.tSubtext)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 32)
-                    }
-
-                    Spacer()
-
-                    // ── Features list ─────────────────────────────────────────
-                    VStack(spacing: 16) {
-                        FeatureRow(icon: "person.badge.shield.checkmark",
-                                   title: "تحقق من الهوية",
-                                   subtitle: "كل مستخدم موثق بهويته الوطنية أو سجله التجاري")
-
-                        FeatureRow(icon: "link.circle.fill",
-                                   title: "سلسلة ملكية موثقة",
-                                   subtitle: "تتبع تاريخ ملكية أي جهاز بشكل موثوق وشفاف")
-
-                        FeatureRow(icon: "checkmark.seal.fill",
-                                   title: "شهادات رقمية",
-                                   subtitle: "شهادة ملكية رسمية لكل عملية نقل موثقة")
-                    }
-                    .padding(.horizontal, 24)
-
-                    Spacer()
-
-                    // ── CTA buttons ───────────────────────────────────────────
-                    VStack(spacing: 12) {
-                        NavigationLink(destination: PhoneView(purpose: .register)) {
-                            Text("إنشاء حساب جديد")
-                                .tPrimaryButton()
-                        }
-
-                        NavigationLink(destination: PhoneView(purpose: .login)) {
-                            Text("تسجيل الدخول")
-                                .tSecondaryButton()
-                        }
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 40)
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("اشترِ جهازك المستعمل وأنت مطمئن")
+                        .font(.custom("ReadexPro-SemiBold", size: 28, relativeTo: .largeTitle))
+                        .foregroundColor(.tText)
+                        .lineSpacing(4)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Text("وثّق كل عملية شراء مع البائع، واحصل على شهادة ملكية باسمك يمكن لأي أحد التحقق منها.")
+                        .font(.tBody)
+                        .foregroundColor(.tSubtext)
+                        .lineSpacing(6)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                .padding(.horizontal, 24)
+                .padding(.top, 26)
+
+                HStack(spacing: 6) {
+                    Capsule().fill(Color.tForest).frame(width: 24, height: 8)
+                    Circle().fill(Color.tBorder).frame(width: 8, height: 8)
+                    Circle().fill(Color.tBorder).frame(width: 8, height: 8)
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 18)
+
+                Spacer(minLength: 12)
+
+                VStack(spacing: 8) {
+                    NavigationLink(destination: PhoneView(purpose: .register)) {
+                        Text("ابدأ الآن").tPrimaryButton()
+                    }
+                    NavigationLink(destination: PhoneView(purpose: .login)) {
+                        Text("لدي حساب، تسجيل الدخول")
+                            .font(.tButton)
+                            .foregroundColor(.tGreenDeep)
+                            .frame(maxWidth: .infinity, minHeight: 46)
+                    }
+                }
+                .padding(.horizontal, 16)
             }
-            .navigationBarHidden(true)
+            .background(Color.tBackground.ignoresSafeArea())
+            .toolbar(.hidden, for: .navigationBar)
         }
     }
 }
 
-struct FeatureRow: View {
+// ── Artwork ───────────────────────────────────────────────────────────────────
+// Laid out in physical (left-to-right) coordinates so the chips sit exactly
+// where the design puts them, whatever the app's RTL setting.
+
+private struct OnboardingArt: View {
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                .fill(LinearGradient(colors: [.tForest2, .tForest],
+                                     startPoint: .topLeading, endPoint: .bottomTrailing))
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                .fill(RadialGradient(colors: [Color.tGreen.opacity(0.35), .clear],
+                                     center: UnitPoint(x: 0.3, y: 0.2), startRadius: 0, endRadius: 260))
+
+            MiniPhone()
+                .rotationEffect(.degrees(-6))
+                .shadow(color: .black.opacity(0.35), radius: 30, y: 30)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                .padding(.top, 64)
+
+            TrustChip(icon: "checkmark.shield", title: "هوية موثّقة")
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                .padding(.top, 46).padding(.trailing, 18)
+            TrustChip(icon: "key", title: "تأكيد برمز الجوال")
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+                .padding(.bottom, 70).padding(.leading, 14)
+            TrustChip(icon: "checkmark.seal", title: "شهادة ملكية")
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(.bottom, 28).padding(.trailing, 30)
+        }
+        .frame(height: 400)
+        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .environment(\.layoutDirection, .leftToRight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("هوية موثّقة، تأكيد برمز الجوال، شهادة ملكية")
+    }
+}
+
+private struct MiniPhone: View {
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "checkmark.seal")
+                .font(.system(size: 26, weight: .regular))
+                .foregroundColor(.tGreenDeep)
+                .frame(maxWidth: .infinity, minHeight: 64)
+                .background(Color.tMint)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            line(1)
+            line(0.6)
+            line(1)
+            line(0.6)
+            Image(systemName: "link")
+                .font(.system(size: 18, weight: .regular))
+                .foregroundColor(.tFaint)
+                .frame(maxWidth: .infinity, minHeight: 46)
+                .background(Color.tSurface)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 16)
+        .frame(width: 150, height: 270, alignment: .top)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+    }
+
+    private func line(_ fraction: CGFloat) -> some View {
+        GeometryReader { geo in
+            Capsule().fill(Color.tBorder).frame(width: geo.size.width * fraction, height: 8)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .frame(height: 8)
+    }
+}
+
+private struct TrustChip: View {
     let icon: String
     let title: String
-    let subtitle: String
-
     var body: some View {
-        HStack(alignment: .top, spacing: 14) {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.custom("IBMPlexSansArabic-SemiBold", size: 12.5, relativeTo: .caption))
+                .foregroundColor(.tText)
             Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(.tPrimary)
-                .frame(width: 36)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.tBodyBold)
-                    .foregroundColor(.tText)
-                Text(subtitle)
-                    .font(.tCaption)
-                    .foregroundColor(.tSubtext)
-            }
-            Spacer()
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.tGreenDeep)
         }
-        .padding(14)
-        .background(Color.tSurface)
-        .cornerRadius(10)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.25), radius: 15, y: 14)
     }
 }

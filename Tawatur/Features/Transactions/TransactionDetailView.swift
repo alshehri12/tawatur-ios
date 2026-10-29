@@ -232,6 +232,7 @@ struct MyTransactionsView: View {
                 }
             }
             .navigationTitle("معاملاتي")
+            .tTabRoot(TabRouter.transactions)
             .task {
                 isLoading = true
                 transactions = (try? await APIClient.shared.request(.myTransactions, as: [Transaction].self)) ?? []
